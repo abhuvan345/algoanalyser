@@ -717,7 +717,14 @@
         }
 
         algorithmSelect.addEventListener('change', (event) => {
-            updateAlgorithmInfo(event.target.value);
+            try {
+                updateAlgorithmInfo(event.target.value);
+            } catch (error) {
+                console.error("Error updating algorithm info or loading array on algorithm change:", error);
+                // In a production environment, you might display a user-friendly error message,
+                // e.g., inputError.textContent = "An error occurred while changing algorithm. Please try again.";
+                // inputError.classList.remove('hidden');
+            }
         });
 
         window.addEventListener('resize', initializeCanvas);
