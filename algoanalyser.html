@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Space Theme Color Palette */
+        :root {
+            --color-space-deep-blue: #08001F; /* Very dark blue, almost black */
+            --color-space-dark-purple: #1A0A3D; /* Deep purple for header/darker elements */
+            --color-space-light-blue: #8A8AFF; /* Lighter blue for primary text/buttons */
+            --color-space-pink: #FF69B4; /* Vibrant pink for accents/reset button */
+            --color-space-yellow: #FFD700; /* Star yellow for accents/pause button */
+            --color-space-silver: #C0C0C0; /* Silver for general text */
+            --color-space-cyan: #00FFFF; /* Cyan for start button */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-space-deep-blue);
+            background-image: url('https://images.unsplash.com/photo-1451187580459-49ceb8e25032?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-attachment: fixed; /* Makes background scroll with content */
+            background-repeat: no-repeat;
+            background-position: center center;
+            color: var(--color-space-silver);
+        }
+        .brand-text-main { color: var(--color-space-light-blue); }
+        .brand-text-accent { color: var(--color-space-yellow); }
+        .brand-bg-main { background-color: var(--color-space-dark-purple); }
+        .card {
+            background-color: rgba(255, 255, 255, 0.05); /* Slightly transparent white for cards */
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2); /* Darker shadow for space */
+            padding: 1.5rem;
+            border: 1px solid rgba(138, 138, 255, 0.2); /* Subtle light blue border */
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 500px;
+            border: 1px solid var(--color-space-dark-purple); /* Border matches header */
+            background-color: rgba(0, 0, 0, 0.3); /* Darker canvas background */
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Custom styles for inputs to match theme */
+        textarea, select {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--color-space-silver);
+            border-color: rgba(138, 138, 255, 0.3);
+        }
+        textarea::placeholder {
+            color: rgba(192, 192, 192, 0.6);
+        }
+        select option {
+            background-color: var(--color-space-deep-blue);
+            color: var(--color-space-silver);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: rgba(138, 138, 255, 0.3);
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+            border-radius: 5px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-space-light-blue);
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--color-space-light-blue);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="brand-bg-main text-white text-center py-8 px-4">
+        <h1 class="text-3xl md:text-4xl font-black tracking-tight">Algorithm Visualizer</h1>
+        <p class="text-lg md:text-xl font-light mt-2 max-w-3xl mx-auto">Visualize sorting algorithms with interactive animations.</p>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="controls" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="card">
+                <h2 class="text-2xl font-bold brand-text-main mb-4">Input Array</h2>
+                <textarea id="arrayInput" rows="3" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter comma-separated distinct integers (e.g., 12, 3, 5, 7, 19)">12, 3, 5, 7, 19, 26, 1, 8</textarea>
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button id="loadArrayBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Load Array
+                    </button>
+                    <button id="generateRandomArrayBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Generate Random (10 elements)
+                    </button>
+                    <input type="range" id="animationSpeed" min="1" max="100" value="1" class="flex-grow">
+                    <span class="text-gray-300 text-sm">Speed: <span id="speedValue">1</span>x</span>
+                </div>
+                <p id="inputError" class="text-red-400 text-sm mt-2 hidden"></p>
+            </div>
+
+            <div class="card">
+                <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm & Controls</h2>
+                <div class="mb-4">
+                    <label for="algorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                    <select id="algorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
+                        <option value="bubbleSort">Bubble Sort</option>
+                        <option value="selectionSort">Selection Sort</option>
+                        <option value="quickSort">Quick Sort</option>
+                        <option value="mergeSort">Merge Sort</option>
+                        <option value="radixSort">Radix Sort (LSD)</option>
+                        <option value="topologicalSort">Topological Sort (Not a bar sort)</option>
+                    </select>
+                </div>
+                <div class="flex flex-wrap gap-3 mt-4">
+                    <button id="startBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Start Animation
+                    </button>
+                    <button id="pauseBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Pause
+                    </button>
+                    <button id="resetBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="visualization" class="my-8">
+            <div class="card">
+                <h2 class="text-2xl font-bold brand-text-main mb-4">Visualization</h2>
+                <div class="canvas-container">
+                    <canvas id="algorithmCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="algorithm-info" class="my-8">
+            <div class="card">
+                <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm Information: <span id="algoName" class="brand-text-accent">Bubble Sort</span></h2>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
+                <p id="algoDescription" class="text-gray-400 mb-4">
+                    Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
+                        <ul class="list-disc list-inside" id="timeComplexityList">
+                            <li>Best Case: O(n)</li>
+                            <li>Average Case: O(n²)</li>
+                            <li>Worst Case: O(n²)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
+                        <ul class="list-disc list-inside" id="spaceComplexityList">
+                            <li>O(1) auxiliary space</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-8 mt-8 border-t border-gray-700">
+        <p class="text-gray-500">Built for educational purposes.</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('algorithmCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const arrayInput = document.getElementById('arrayInput');
+        const loadArrayBtn = document.getElementById('loadArrayBtn');
+        const generateRandomArrayBtn = document.getElementById('generateRandomArrayBtn');
+        const animationSpeedSlider = document.getElementById('animationSpeed');
+        const speedValueSpan = document.getElementById('speedValue');
+        const inputError = document.getElementById('inputError');
+
+        const algorithmSelect = document.getElementById('algorithmSelect');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Global variables for algorithm info elements
+        let algoNameSpan;
+        let algoDescriptionP;
+        let timeComplexityList;
+        let spaceComplexityList;
+
+        let originalArray = [];
+        let currentArray = [];
+        let animationSteps = [];
+        let animationIndex = 0;
+        let animationFrameId = null;
+        let animationSpeed = 1; // Default speed to 1x
+        let isAnimating = false;
+
+        // Algorithm visualization colors (kept vibrant for clarity)
+        const BAR_COLOR = '#00FFFF'; // Cyan
+        const COMPARE_COLOR = '#FFD700'; // Star Yellow
+        const SWAP_COLOR = '#FF69B4'; // Pink
+        const SORTED_COLOR = '#8A8AFF'; // Light Blue (sorted)
+        const PIVOT_COLOR = '#AE2012'; // Red (from original for strong contrast)
+        const MIN_COLOR = '#C0C0C0'; // Silver (new for min element)
+        const MERGE_COLOR = '#005F73'; // Dark Teal (for merge operations)
+        const RADIX_BUCKET_COLOR = '#4B5563'; // Dark Gray (for radix pass visualization)
+
+        // Initial setup
+        function initializeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            loadArray();
+        }
+
+        function loadArray() {
+            const inputValue = arrayInput.value.trim();
+            if (!inputValue) {
+                inputError.textContent = 'Array cannot be empty.';
+                inputError.classList.remove('hidden');
+                return;
+            }
+
+            const nums = inputValue.split(',').map(s => parseInt(s.trim()));
+            const uniqueNums = new Set(nums);
+
+            if (nums.some(isNaN) || nums.length !== uniqueNums.size || nums.length === 0) {
+                inputError.textContent = 'Please enter distinct integers separated by commas. Array cannot be empty.';
+                inputError.classList.remove('hidden');
+                return;
+            }
+            // Check for negative numbers or zero for Radix sort
+            if (algorithmSelect.value === 'radixSort' && nums.some(num => num <= 0)) {
+                inputError.textContent = 'Radix Sort requires positive integers greater than zero.';
+                inputError.classList.remove('hidden');
+                return;
+            }
+
+            inputError.classList.add('hidden');
+            originalArray = [...nums];
+            console.log("loadArray: originalArray set to", originalArray); // Debug log
+            resetAnimation();
+        }
+
+        function generateRandomArray(count = 10) {
+            const arr = [];
+            while (arr.length < count) {
+                const randomNum = Math.floor(Math.random() * 99) + 1; // Numbers between 1 and 99
+                if (!arr.includes(randomNum)) {
+                    arr.push(randomNum);
+                }
+            }
+            arrayInput.value = arr.join(', ');
+            console.log("Generated array input:", arrayInput.value); // Debug log
+            loadArray(); // Call loadArray to process the new input and reset animation
+        }
+
+        function drawArray(arr, highlight = {}, sortedUntilIndex = -1, radixPass = false) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (arr.length === 0) return; // Prevent division by zero
+
+            const barWidth = canvas.width / arr.length;
+            const maxVal = Math.max(...originalArray, 1); // Ensure maxVal is at least 1 to avoid division by zero
+            const scaleFactor = (canvas.height - 40) / maxVal; // Leave some padding
+
+            for (let i = 0; i < arr.length; i++) {
+                const barHeight = arr[i] * scaleFactor;
+                const x = i * barWidth;
+                const y = canvas.height - barHeight;
+
+                // Default color
+                ctx.fillStyle = BAR_COLOR;
+
+                // Priority for highlighting:
+                // 1. Swapping elements (most transient)
+                if (highlight.swap && (i === highlight.swap[0] || i === highlight.swap[1])) {
+                    ctx.fillStyle = SWAP_COLOR;
+                }
+                // 2. Elements being compared
+                else if (highlight.compare && (i === highlight.compare[0] || i === highlight.compare[1])) {
+                    ctx.fillStyle = COMPARE_COLOR;
+                }
+                // 3. Specific roles: Pivot, Min element
+                else if (highlight.pivot !== undefined && i === highlight.pivot) {
+                    ctx.fillStyle = PIVOT_COLOR;
+                } else if (highlight.currentMin !== undefined && i === highlight.currentMin) {
+                    ctx.fillStyle = MIN_COLOR;
+                }
+                // 4. General 'current' element (e.g., in selection sort iterating through, or current element in Radix)
+                else if (highlight.current !== undefined && i === highlight.current) {
+                    ctx.fillStyle = COMPARE_COLOR;
+                }
+                // 5. Phase-specific colors: Merging range, Radix pass
+                else if (highlight.merging && i >= highlight.merging[0] && i <= highlight.merging[1]) {
+                    ctx.fillStyle = MERGE_COLOR;
+                } else if (radixPass) {
+                    ctx.fillStyle = RADIX_BUCKET_COLOR;
+                }
+                // 6. Sorted state (lowest priority - only apply if no other transient highlight applies)
+                // This means a sorted bar can still be highlighted as compared/swapped.
+                else if (Array.isArray(sortedUntilIndex)) { // For quicksort, individual sorted indices
+                    if (sortedUntilIndex.some(idx => i === idx)) {
+                        ctx.fillStyle = SORTED_COLOR;
+                    }
+                } else if (i >= sortedUntilIndex && sortedUntilIndex !== -1) { // Standard sorted range
+                    ctx.fillStyle = SORTED_COLOR;
+                }
+                
+                ctx.fillRect(x, y, barWidth - 2, barHeight); // -2 for slight gap
+
+                ctx.fillStyle = '#C0C0C0'; // Silver text for values
+                ctx.font = `${Math.max(10, barWidth / 4)}px Inter`;
+                ctx.textAlign = 'center';
+                ctx.fillText(arr[i], x + barWidth / 2, canvas.height - barHeight - 5);
+            }
+        }
+
+        // --- Sorting Algorithms ---
+
+        function bubbleSort(arr) {
+            const steps = [];
+            let n = arr.length;
+            let a = [...arr];
+
+            for (let i = 0; i < n - 1; i++) {
+                let swapped = false;
+                for (let j = 0; j < n - 1 - i; j++) {
+                    steps.push({ array: [...a], highlight: { compare: [j, j + 1] }, sortedUntilIndex: n - 1 - i - 1 });
+                    if (a[j] > a[j + 1]) {
+                        steps.push({ array: [...a], highlight: { swap: [j, j + 1] }, sortedUntilIndex: n - 1 - i - 1 });
+                        let temp = a[j];
+                        a[j] = a[j + 1];
+                        a[j + 1] = temp;
+                        swapped = true;
+                        steps.push({ array: [...a], highlight: { swap: [j, j + 1] }, sortedUntilIndex: n - 1 - i - 1 });
+                    }
+                }
+                steps.push({ array: [...a], sortedUntilIndex: n - 1 - i });
+                if (!swapped) {
+                    for(let k=0; k < n - i -1; k++) { // Mark remaining as sorted
+                        steps.push({ array: [...a], sortedUntilIndex: n - 1 - k });
+                    }
+                    break;
+                }
+            }
+            steps.push({ array: [...a], sortedUntilIndex: n - 1 });
+            return steps;
+        }
+
+        function selectionSort(arr) {
+            const steps = [];
+            let n = arr.length;
+            let a = [...arr];
+
+            for (let i = 0; i < n - 1; i++) {
+                let minIdx = i;
+                steps.push({ array: [...a], highlight: { current: i, currentMin: minIdx }, sortedUntilIndex: i - 1 });
+                for (let j = i + 1; j < n; j++) {
+                    steps.push({ array: [...a], highlight: { compare: [j, minIdx], current: i }, sortedUntilIndex: i - 1 });
+                    if (a[j] < a[minIdx]) {
+                        minIdx = j;
+                        steps.push({ array: [...a], highlight: { current: i, currentMin: minIdx }, sortedUntilIndex: i - 1 });
+                    }
+                }
+                if (minIdx !== i) {
+                    steps.push({ array: [...a], highlight: { swap: [i, minIdx], current: i, currentMin: minIdx }, sortedUntilIndex: i - 1 });
+                    let temp = a[i];
+                    a[i] = a[minIdx];
+                    a[minIdx] = temp;
+                    steps.push({ array: [...a], highlight: { swap: [i, minIdx], current: i, currentMin: minIdx }, sortedUntilIndex: i - 1 });
+                }
+                steps.push({ array: [...a], sortedUntilIndex: i });
+            }
+            steps.push({ array: [...a], sortedUntilIndex: n - 1 });
+            return steps;
+        }
+
+        function quickSort(arr) {
+            const steps = [];
+            let a = [...arr];
+            
+            function partition(arr, low, high) {
+                let pivot = arr[high];
+                let i = (low - 1);
+
+                steps.push({ array: [...arr], highlight: { pivot: high }, sortedIndices: [] });
+
+                for (let j = low; j < high; j++) {
+                    steps.push({ array: [...arr], highlight: { compare: [j, high], pivot: high }, sortedIndices: [] });
+                    if (arr[j] <= pivot) {
+                        i++;
+                        if (i !== j) {
+                            steps.push({ array: [...arr], highlight: { swap: [i, j], pivot: high }, sortedIndices: [] });
+                            [arr[i], arr[j]] = [arr[j], arr[i]];
+                            steps.push({ array: [...arr], highlight: { swap: [i, j], pivot: high }, sortedIndices: [] });
+                        }
+                    }
+                }
+                steps.push({ array: [...arr], highlight: { swap: [i + 1, high], pivot: high }, sortedIndices: [] });
+                [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+                steps.push({ array: [...arr], highlight: { swap: [i + 1, high], pivot: high }, sortedIndices: [] });
+                return i + 1;
+            }
+
+            function sort(arr, low, high) {
+                if (low < high) {
+                    let pi = partition(arr, low, high);
+                    steps.push({ array: [...arr], highlight: {}, sortedIndices: [pi] }); // Mark pivot as sorted
+
+                    sort(arr, low, pi - 1);
+                    sort(arr, pi + 1, high);
+                } else if (low === high) {
+                    steps.push({ array: [...arr], highlight: {}, sortedIndices: [low] }); // Mark single element sub-arrays as sorted
+                }
+            }
+
+            sort(a, 0, a.length - 1);
+            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 }); // Final sorted state
+            return steps;
+        }
+
+
+        function mergeSort(arr) {
+            const steps = [];
+            let a = [...arr];
+
+            function merge(arr, l, m, r) {
+                let n1 = m - l + 1;
+                let n2 = r - m;
+
+                let L = new Array(n1);
+                let R = new Array(n2);
+
+                for (let i = 0; i < n1; i++) L[i] = arr[l + i];
+                for (let j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+
+                let i = 0;
+                let j = 0;
+                let k = l;
+
+                steps.push({ array: [...arr], highlight: { merging: [l, r] }, sortedUntilIndex: -1 });
+
+                while (i < n1 && j < n2) {
+                    steps.push({ array: [...arr], highlight: { compare: [l + i, m + 1 + j], merging: [l, r] }, sortedUntilIndex: -1 });
+                    if (L[i] <= R[j]) {
+                        arr[k] = L[i];
+                        i++;
+                    } else {
+                        arr[k] = R[j];
+                        j++;
+                    }
+                    steps.push({ array: [...arr], highlight: { current: k, merging: [l, r] }, sortedUntilIndex: -1 }); // Show placement
+                    k++;
+                }
+
+                while (i < n1) {
+                    arr[k] = L[i];
+                    steps.push({ array: [...arr], highlight: { current: k, merging: [l, r] }, sortedUntilIndex: -1 });
+                    i++;
+                    k++;
+                }
+
+                while (j < n2) {
+                    arr[k] = R[j];
+                    steps.push({ array: [...arr], highlight: { current: k, merging: [l, r] }, sortedUntilIndex: -1 });
+                    j++;
+                    k++;
+                }
+            }
+
+            function sort(arr, l, r) {
+                if (l < r) {
+                    let m = Math.floor(l + (r - l) / 2);
+                    sort(arr, l, m);
+                    sort(arr, m + 1, r);
+                    merge(arr, l, m, r);
+                }
+            }
+
+            sort(a, 0, a.length - 1);
+            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 }); // Final sorted state
+            return steps;
+        }
+        
+        function radixSort(arr) {
+            const steps = [];
+            let a = [...arr];
+            const maxVal = Math.max(...a);
+            let exp = 1; // Current digit place value (1s, 10s, 100s, ...)
+
+            steps.push({ array: [...a], highlight: {}, radixPass: false }); // Initial state
+
+            while (Math.floor(maxVal / exp) > 0) {
+                const output = new Array(a.length);
+                const count = new Array(10).fill(0); // For digits 0-9
+
+                // Count occurrences of digits
+                for (let i = 0; i < a.length; i++) {
+                    steps.push({ array: [...a], highlight: { current: i }, radixPass: true });
+                    count[Math.floor(a[i] / exp) % 10]++;
+                }
+
+                // Change count[i] so that count[i] now contains actual position of this digit in output[]
+                for (let i = 1; i < 10; i++) {
+                    count[i] += count[i - 1];
+                }
+
+                // Build the output array
+                for (let i = a.length - 1; i >= 0; i--) {
+                    const digit = Math.floor(a[i] / exp) % 10;
+                    output[count[digit] - 1] = a[i];
+                    count[digit]--;
+                    steps.push({ array: [...output], highlight: { current: i }, radixPass: true }); // Show elements being placed
+                }
+
+                // Copy the output array to arr[], so that arr[] now contains sorted numbers according to current digit
+                for (let i = 0; i < a.length; i++) {
+                    a[i] = output[i];
+                }
+                steps.push({ array: [...a], highlight: {}, radixPass: true }); // After collecting all elements for this pass
+
+                exp *= 10;
+            }
+            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 }); // Final sorted state
+            return steps;
+        }
+
+        // --- Animation Control and Drawing ---
+
+        function animate() {
+            if (!isAnimating || animationIndex >= animationSteps.length) {
+                isAnimating = false;
+                cancelAnimationFrame(animationFrameId);
+                startBtn.textContent = 'Start Animation';
+                drawArray(currentArray, {}, currentArray.length - 1); // Ensure final state is fully sorted color
+                return;
+            }
+
+            const step = animationSteps[animationIndex];
+            currentArray = [...step.array];
+            // console.log(`Step ${animationIndex}: Array=${step.array}, Highlight=${JSON.stringify(step.highlight)}, Sorted=${step.sortedUntilIndex || (step.sortedIndices ? step.sortedIndices : -1)}, RadixPass=${step.radixPass}`); // For debugging
+            drawArray(currentArray, step.highlight || {}, step.sortedUntilIndex || (step.sortedIndices ? step.sortedIndices : -1), step.radixPass || false);
+
+            animationIndex++;
+            animationFrameId = setTimeout(() => {
+                 requestAnimationFrame(animate);
+            }, 1000 / animationSpeed); // Convert speed slider value to frame delay
+        }
+
+        function startAnimation() {
+            if (!isAnimating) {
+                if (animationIndex >= animationSteps.length) {
+                    resetAnimation(); // If animation finished, reset and start over
+                }
+                isAnimating = true;
+                startBtn.textContent = 'Animating...';
+                pauseBtn.textContent = 'Pause';
+                animate();
+            }
+        }
+
+        function pauseAnimation() {
+            isAnimating = false;
+            cancelAnimationFrame(animationFrameId);
+            startBtn.textContent = 'Resume Animation';
+            pauseBtn.textContent = 'Paused';
+        }
+
+        function resetAnimation() {
+            isAnimating = false;
+            cancelAnimationFrame(animationFrameId);
+            currentArray = [...originalArray];
+            animationIndex = 0;
+            startBtn.textContent = 'Start Animation';
+            pauseBtn.textContent = 'Pause';
+            drawArray(currentArray);
+            
+            // Re-generate steps for the currently selected algorithm
+            const selectedAlgo = algorithmSelect.value;
+            switch(selectedAlgo) {
+                case 'bubbleSort':
+                    animationSteps = bubbleSort([...originalArray]);
+                    break;
+                case 'selectionSort':
+                    animationSteps = selectionSort([...originalArray]);
+                    break;
+                case 'quickSort':
+                    animationSteps = quickSort([...originalArray]);
+                    break;
+                case 'mergeSort':
+                    animationSteps = mergeSort([...originalArray]);
+                    break;
+                case 'radixSort':
+                    animationSteps = radixSort([...originalArray]);
+                    break;
+                default:
+                    animationSteps = [];
+            }
+        }
+
+        // --- Event Listeners ---
+        loadArrayBtn.addEventListener('click', loadArray);
+        generateRandomArrayBtn.addEventListener('click', generateRandomArray);
+        startBtn.addEventListener('click', startAnimation);
+        pauseBtn.addEventListener('click', pauseAnimation);
+        resetBtn.addEventListener('click', resetAnimation);
+
+        animationSpeedSlider.addEventListener('input', (event) => {
+            animationSpeed = parseInt(event.target.value);
+            speedValueSpan.textContent = animationSpeed;
+            if (isAnimating) {
+                cancelAnimationFrame(animationFrameId);
+                animate();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Assign global variables once DOM is ready
+            algoNameSpan = document.getElementById('algoName');
+            algoDescriptionP = document.getElementById('algoDescription');
+            timeComplexityList = document.getElementById('timeComplexityList'); // Using ID directly
+            spaceComplexityList = document.getElementById('spaceComplexityList'); // Using ID directly
+
+            // Set initial speed slider value and text
+            animationSpeedSlider.value = animationSpeed;
+            speedValueSpan.textContent = animationSpeed;
+            
+            initializeCanvas();
+            // Trigger change to set initial algorithm info for Bubble Sort
+            // This needs to be a function that gets the correct elements
+            updateAlgorithmInfo(algorithmSelect.value);
+        });
+
+        // Moved algorithm info update logic into a separate function
+        function updateAlgorithmInfo(selectedAlgo) {
+            let description = '';
+            let timeComplexity = [];
+            let spaceComplexity = [];
+
+            if (selectedAlgo === 'bubbleSort') {
+                description = 'Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.';
+                timeComplexity = ['Best Case: O(n)', 'Average Case: O(n²)', 'Worst Case: O(n²)'];
+                spaceComplexity = ['O(1) auxiliary space'];
+            } else if (selectedAlgo === 'selectionSort') {
+                description = 'Selection Sort sorts an array by repeatedly finding the minimum element from the unsorted part and putting it at the beginning. The algorithm maintains two sub-arrays in a given array: (1) The sub-array which is already sorted, and (2) The remaining sub-array which is unsorted.';
+                timeComplexity = ['Best Case: O(n²)', 'Average Case: O(n²)', 'Worst Case: O(n²)'];
+                spaceComplexity = ['O(1) auxiliary space'];
+            } else if (selectedAlgo === 'quickSort') {
+                description = 'Quick Sort is a highly efficient, comparison-based sorting algorithm that uses a divide-and-conquer approach. It picks an element as a pivot and partitions the given array around the picked pivot. The process is then recursively applied to the sub-arrays.';
+                timeComplexity = ['Best Case: O(n log n)', 'Average Case: O(n log n)', 'Worst Case: O(n²)'];
+                spaceComplexity = ['O(log n) for recursion stack (average)', 'O(n) for recursion stack (worst)'];
+            } else if (selectedAlgo === 'mergeSort') {
+                description = 'Merge Sort is a divide-and-conquer algorithm. It divides the input array into two halves, calls itself for the two halves, and then merges the two sorted halves. The merge() function is used for merging two halves.';
+                timeComplexity = ['Best Case: O(n log n)', 'Average Case: O(n log n)', 'Worst Case: O(n log n)'];
+                spaceComplexity = ['O(n) auxiliary space'];
+            } else if (selectedAlgo === 'radixSort') {
+                description = 'Radix Sort is a non-comparison based sorting algorithm. It sorts integers by processing individual digits. It works by grouping numbers by the same digit (e.g., 1s place, then 10s place, and so on) and then repeatedly distributing and collecting elements into buckets.';
+                timeComplexity = ['Best Case: O(nk)', 'Average Case: O(nk)', 'Worst Case: O(nk) (where k is number of digits)'];
+                spaceComplexity = ['O(n + k) auxiliary space'];
+            } else if (selectedAlgo === 'topologicalSort') {
+                description = 'Topological Sort is an algorithm for ordering the vertices of a directed acyclic graph (DAG) such that for every directed edge from vertex `u` to vertex `v`, `u` comes before `v` in the ordering. This algorithm is not applicable to simple array sorting visualizations as presented here.';
+                timeComplexity = ['O(V + E) (V=vertices, E=edges)'];
+                spaceComplexity = ['O(V + E)'];
+            }
+
+            if (algoNameSpan) algoNameSpan.textContent = selectedAlgo.replace(/([A-Z])/g, ' $1').trim().replace('Sort', ' Sort'); // Format algo name
+            if (algoDescriptionP) algoDescriptionP.textContent = description;
+
+            // Update Time Complexity
+            if (timeComplexityList) {
+                timeComplexityList.innerHTML = '';
+                timeComplexity.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    timeComplexityList.appendChild(li);
+                });
+            }
+
+            // Update Space Complexity
+            if (spaceComplexityList) {
+                spaceComplexityList.innerHTML = '';
+                spaceComplexity.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    spaceComplexityList.appendChild(li);
+                });
+            }
+
+            loadArray(); // Reload array to ensure correct initial state for new algorithm
+        }
+
+        algorithmSelect.addEventListener('change', (event) => {
+            updateAlgorithmInfo(event.target.value);
+        });
+
+        window.addEventListener('resize', initializeCanvas);
+    </script>
+</body>
+</html>
