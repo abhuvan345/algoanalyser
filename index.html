@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <style>
         /* Space Theme Color Palette */
         :root {
@@ -121,6 +124,83 @@
             margin-right: 8px;
             border-radius: 4px;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--color-space-dark-purple);
+            margin: auto;
+            padding: 25px;
+            border: 1px solid var(--color-space-light-blue);
+            width: 90%;
+            max-width: 700px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+            transform: translateY(-50px); /* Initial offset for animation */
+            animation: slideIn 0.3s forwards;
+        }
+
+        @keyframes slideIn {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-button {
+            color: var(--color-space-silver);
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: var(--color-space-pink);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-content h3 {
+            color: var(--color-space-light-blue);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content ul {
+            list-style: disc;
+            margin-left: 20px;
+        }
+
+        .modal-content ul li {
+            margin-bottom: 8px;
+        }
+
+        .modal-content a {
+            color: var(--color-space-yellow);
+            text-decoration: underline;
+        }
+
+        .modal-content iframe {
+            width: 100%;
+            height: 350px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -213,6 +293,14 @@
                                 <li>O(1) auxiliary space</li>
                             </ul>
                         </div>
+                    </div>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <button id="viewYoutubeArrayBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            <i class="fab fa-youtube mr-2"></i>Watch Video
+                        </button>
+                        <button id="viewTextbookArrayBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            <i class="fas fa-book mr-2"></i>Textbook Resources
+                        </button>
                     </div>
                 </div>
             </section>
@@ -312,6 +400,14 @@
                             </ul>
                         </div>
                     </div>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <button id="viewYoutubeGraphBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            <i class="fab fa-youtube mr-2"></i>Watch Video
+                        </button>
+                        <button id="viewTextbookGraphBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            <i class="fas fa-book mr-2"></i>Textbook Resources
+                        </button>
+                    </div>
                 </div>
             </section>
         </div>
@@ -320,9 +416,26 @@
 
     <footer class="text-center p-8 mt-8 border-t border-gray-700">
         <p class="text-gray-500">Built for educational purposes. Designed by BHUVAN A</p>
+        <p class="mt-2">
+            <a href="admin_panel.html" target="_blank" class="text-blue-400 hover:underline">Manage Resources (Admin Panel)</a>
+        </p>
     </footer>
 
-    <script>
+    <!-- Resource Modal -->
+    <div id="resourceModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // --- Global Variables and Constants ---
         const arrayAlgoSection = document.getElementById('arrayAlgoSection');
         const graphAlgoSection = document.getElementById('graphAlgoSection');
@@ -343,6 +456,9 @@
         const pauseBtn = document.getElementById('pauseBtn');
         const resetBtn = document.getElementById('resetBtn');
         let algoNameSpan, algoDescriptionP, timeComplexityList, spaceComplexityList;
+        const viewYoutubeArrayBtn = document.getElementById('viewYoutubeArrayBtn');
+        const viewTextbookArrayBtn = document.getElementById('viewTextbookArrayBtn');
+
 
         // Graph Algo Elements
         const graphCanvas = document.getElementById('graphCanvas');
@@ -357,6 +473,14 @@
         const pauseGraphBtn = document.getElementById('pauseGraphBtn');
         const resetGraphBtn = document.getElementById('resetGraphBtn');
         let algoGraphNameSpan, algoGraphDescriptionP, graphTimeComplexityList, graphSpaceComplexityList;
+        const viewYoutubeGraphBtn = document.getElementById('viewYoutubeGraphBtn');
+        const viewTextbookGraphBtn = document.getElementById('viewTextbookGraphBtn');
+
+        // Resource Modal Elements
+        const resourceModal = document.getElementById('resourceModal');
+        const closeModalBtn = resourceModal.querySelector('.close-button');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
 
         let originalArray = [];
         let currentArray = [];
@@ -376,6 +500,15 @@
         const INF = Infinity; // Represents no direct connection for shortest path/MST
 
         let animationSpeed = 1; // Default speed to 1x
+
+        // Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId; // To store the current user's UID for Firestore paths
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Global app ID
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        let firebaseReadyPromise; // To manage Firebase initialization state
 
         // Algorithm visualization colors (kept vibrant for clarity)
         const BAR_COLOR = '#00FFFF'; // Cyan
@@ -409,6 +542,143 @@
             'MST_EDGE_COLOR': MST_EDGE_COLOR
         };
 
+        // --- Firebase Initialization and Auth ---
+        async function initializeFirebase() {
+            if (firebaseReadyPromise) return firebaseReadyPromise; // Prevent multiple initializations
+
+            firebaseReadyPromise = new Promise(async (resolve, reject) => {
+                try {
+                    if (Object.keys(firebaseConfig).length > 0) {
+                        app = initializeApp(firebaseConfig);
+                        db = getFirestore(app);
+                        auth = getAuth(app);
+
+                        // This listener will fire immediately with current user, or after sign-in
+                        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                            unsubscribe(); // Unsubscribe after first state change
+                            userId = user ? user.uid : null;
+                            console.log("Firebase initialized. User ID:", userId);
+
+                            // If userId is null, attempt anonymous sign-in
+                            if (!user) {
+                                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                                try {
+                                    if (initialAuthToken) {
+                                        await signInWithCustomToken(auth, initialAuthToken);
+                                        console.log("Signed in with custom token.");
+                                    } else {
+                                        await signInAnonymously(auth);
+                                        console.log("Signed in anonymously.");
+                                    }
+                                    // The onAuthStateChanged listener will fire again after successful sign-in
+                                    // with the new user object, so userId will be updated then.
+                                } catch (signInError) {
+                                    console.error("Error during initial sign-in:", signInError);
+                                    // Even if sign-in fails, we resolve, but userId will remain null
+                                }
+                            }
+                            resolve(); // Resolve the promise indicating Firebase is ready and auth state known
+                        });
+
+                    } else {
+                        console.warn("Firebase config is not available. Resource management will be disabled.");
+                        resolve(); // Resolve immediately if Firebase config isn't provided
+                    }
+                } catch (error) {
+                    console.error("Error initializing Firebase:", error);
+                    reject(error);
+                }
+            });
+            return firebaseReadyPromise;
+        }
+
+        // --- Resource Loading and Modal Display ---
+        async function loadAlgorithmResources(algoId) {
+            // Ensure Firebase is initialized and user is authenticated before attempting to load
+            if (!db || userId === null) {
+                console.warn("Firestore not initialized or user not authenticated. Cannot load resources.");
+                currentAlgorithmResources[algoId] = { youtubeLink: '', textbookResources: [] }; // Default empty
+                return;
+            }
+            try {
+                // Public data: /artifacts/{appId}/public/data/algorithm_resources/{algoId}
+                const docRef = doc(db, `artifacts/${appId}/public/data/algorithm_resources`, algoId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Store fetched data globally or for current algorithm
+                    currentAlgorithmResources[algoId] = data;
+                } else {
+                    currentAlgorithmResources[algoId] = { youtubeLink: '', textbookResources: [] };
+                }
+                console.log(`Resources loaded for ${algoId}:`, currentAlgorithmResources[algoId]);
+            } catch (error) {
+                console.error("Error loading algorithm resources:", error);
+                currentAlgorithmResources[algoId] = { youtubeLink: '', textbookResources: [] }; // Default empty on error
+            }
+        }
+
+        // Object to store resources for all algorithms
+        const currentAlgorithmResources = {};
+
+        function openResourceModal(algoId, type) {
+            const resources = currentAlgorithmResources[algoId];
+            if (!resources) {
+                modalTitle.textContent = "No Resources Available";
+                modalContent.innerHTML = "<p class='text-gray-400'>No resources found for this algorithm. An admin can add them via the Manage Resources link in the footer.</p>";
+                resourceModal.classList.remove('hidden');
+                return;
+            }
+
+            modalContent.innerHTML = ''; // Clear previous content
+
+            if (type === 'youtube') {
+                modalTitle.textContent = `Video for ${algoId.replace(/([A-Z])/g, ' $1').trim().replace('Sort', ' Sort').replace('dijkstra', 'Dijkstra\'s Algorithm').replace('prim', 'Prim\'s Algorithm').replace('floydWarshall', 'Floyd-Warshall Algorithm')}`;
+                if (resources.youtubeLink) {
+                    const videoId = resources.youtubeLink.split('v=')[1] || resources.youtubeLink.split('youtu.be/')[1];
+                    if (videoId) {
+                        modalContent.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId.split('&')[0]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                    } else {
+                        modalContent.innerHTML = `<p class='text-red-400'>Invalid YouTube URL: ${resources.youtubeLink}</p>`;
+                    }
+                } else {
+                    modalContent.innerHTML = "<p class='text-gray-400'>No YouTube video available for this algorithm.</p>";
+                }
+            } else if (type === 'textbook') {
+                modalTitle.textContent = `Textbook Resources for ${algoId.replace(/([A-Z])/g, ' $1').trim().replace('Sort', ' Sort').replace('dijkstra', 'Dijkstra\'s Algorithm').replace('prim', 'Prim\'s Algorithm').replace('floydWarshall', 'Floyd-Warshall Algorithm')}`;
+                if (resources.textbookResources && resources.textbookResources.length > 0) {
+                    const ul = document.createElement('ul');
+                    resources.textbookResources.forEach(res => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = res.url;
+                        a.target = '_blank';
+                        a.textContent = res.title || res.url;
+                        li.appendChild(a);
+                        ul.appendChild(li);
+                    });
+                    modalContent.appendChild(ul);
+                } else {
+                    modalContent.innerHTML = "<p class='text-gray-400'>No textbook resources available for this algorithm.</p>";
+                }
+            }
+            resourceModal.classList.remove('hidden');
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            resourceModal.classList.add('hidden');
+            modalContent.innerHTML = ''; // Clear content when closing
+        });
+
+        // Close modal if clicked outside content
+        window.addEventListener('click', (event) => {
+            if (event.target === resourceModal) {
+                resourceModal.classList.add('hidden');
+                modalContent.innerHTML = '';
+            }
+        });
+
         // --- UI Switching Logic ---
         function showArrayAlgorithms() {
             arrayAlgoSection.classList.remove('hidden');
@@ -418,6 +688,7 @@
             stopAllAnimations(); // Stop any ongoing animations
             resetArrayAnimation();
             initializeCanvas(); // Re-init array canvas
+            loadAlgorithmResources(algorithmSelect.value); // Load resources for current array algo
         }
 
         function showGraphAlgorithms() {
@@ -428,6 +699,7 @@
             stopAllAnimations(); // Stop any ongoing animations
             resetGraphAnimation();
             initializeGraphCanvas(); // Re-init graph canvas
+            loadAlgorithmResources(graphAlgorithmSelect.value); // Load resources for current graph algo
         }
 
         function stopAllAnimations() {
@@ -844,6 +1116,7 @@
             }
 
             loadArray();
+            loadAlgorithmResources(selectedAlgo); // Load resources for newly selected algorithm
         }
 
         // --- Graph Algorithm Functions ---
@@ -855,6 +1128,7 @@
         }
 
         function loadGraph() {
+            graphInputError.classList.add('hidden'); // Clear previous errors
             const matrixStr = adjacencyMatrixInput.value.trim();
             if (!matrixStr) {
                 graphInputError.textContent = 'Adjacency matrix cannot be empty.';
@@ -862,10 +1136,15 @@
                 return;
             }
 
-            const rows = matrixStr.split('\n').map(row => row.trim().split(' ').map(Number));
+            const rows = matrixStr.split('\n')
+                                  .map(row => row.trim())
+                                  .filter(row => row !== '') // Filter out completely empty lines
+                                  .map(row => row.split(' ').map(Number));
+
             const N = rows.length;
+
             if (N === 0) {
-                graphInputError.textContent = 'Invalid matrix format. No rows found.';
+                graphInputError.textContent = 'Invalid matrix format. No valid rows found. Please ensure at least one row with numbers.';
                 graphInputError.classList.remove('hidden');
                 return;
             }
@@ -889,6 +1168,7 @@
             let isSymmetric = true;
             for (let i = 0; i < N; i++) {
                 for (let j = 0; j < N; j++) {
+                    // Check if matrix[i][j] and matrix[j][i] are equal for undirected graph
                     if (rows[i][j] !== rows[j][i]) {
                         isSymmetric = false;
                         break;
@@ -941,6 +1221,8 @@
         }
 
         function generateRandomGraph(count = 5) {
+            // Ensure count is at least 1 to prevent 0-node graphs
+            count = Math.max(1, count); 
             const matrix = Array(count).fill(0).map(() => Array(count).fill(0));
             for (let i = 0; i < count; i++) {
                 for (let j = i + 1; j < count; j++) { // Ensure symmetric for undirected
@@ -950,8 +1232,11 @@
                     }
                 }
             }
+            // Update input fields
             adjacencyMatrixInput.value = matrix.map(row => row.join(' ')).join('\n');
             startNodeInput.value = Math.floor(Math.random() * count);
+            
+            // Explicitly call loadGraph to process the new input and redraw
             loadGraph();
         }
 
@@ -1065,12 +1350,12 @@
                     graphCtx.textAlign = 'center';
                     graphCtx.textBaseline = 'middle';
                     // Position slightly above and to the right of the node, with increased offset
-                    graphCtx.fillText(nodes[i].statusText, nodes[i].x + nodeRadius * 0.7 + 8, nodes[i].y - nodeRadius * 0.7 - 8);
+                    graphCtx.fillText(nodes[i].statusText, nodes[i].x + nodeRadius * 0.9 + 8, nodes[i].y - nodeRadius * 0.9 - 8);
                 }
 
                 // Draw distance/key if applicable (for Dijkstra's/Prim's)
                 const currentAlgo = graphAlgorithmSelect.value;
-                if (currentAlgo === 'dijkstra' || currentAlgo === 'prim' || currentAlgo === 'floydWarshall') {
+                if (currentAlgo === 'dijkstra' || currentCualgo === 'prim' || currentAlgo === 'floydWarshall') {
                     let displayValue = '';
                     if (currentAlgo === 'dijkstra' || currentAlgo === 'floydWarshall') {
                         displayValue = nodes[i].distance === INF ? 'INF' : nodes[i].distance;
@@ -1363,9 +1648,16 @@
                 for (let i = 0; i < N; i++) {
                     for (let j = 0; j < N; j++) {
                         // Highlight current k, i, j
+                        // Reset all node statuses for a clean state at the beginning of each triplet iteration
+                        for (let nodeIdx = 0; nodeIdx < N; nodeIdx++) {
+                            currentNodesState[nodeIdx].isCurrent = false;
+                            currentNodesState[nodeIdx].statusText = '';
+                        }
+
                         currentNodesState[k].isCurrent = true;
-                        currentNodesState[i].statusText = 'i';
-                        currentNodesState[j].statusText = 'j';
+                        currentNodesState[k].statusText = 'K'; // Intermediate node
+                        if (i !== k) currentNodesState[i].statusText = 'I'; // Source node
+                        if (j !== k && j !== i) currentNodesState[j].statusText = 'J'; // Destination node
 
                         // Show matrix and highlight k node
                         steps.push({ 
@@ -1384,11 +1676,20 @@
                                 highlight: { current: k, checkI: i, checkJ: j, updatedPath: [i, k, j], matrix: JSON.parse(JSON.stringify(dist)) } 
                             });
                         }
-                        currentNodesState[i].statusText = ''; // Clear i and j status
-                        currentNodesState[j].statusText = '';
                     }
                 }
-                currentNodesState[k].isCurrent = false; // Clear k status after its iteration
+                // Clear k status after its iteration
+                currentNodesState[k].isCurrent = false;
+                currentNodesState[k].statusText = 'V'; // Mark as considered for all pairs
+                // Clear all other temporary statuses for the next k iteration
+                for (let nodeIdx = 0; nodeIdx < N; nodeIdx++) {
+                    if (nodeIdx !== k) {
+                        currentNodesState[nodeIdx].isCurrent = false;
+                        if (currentNodesState[nodeIdx].statusText === 'I' || currentNodesState[nodeIdx].statusText === 'J') {
+                            currentNodesState[nodeIdx].statusText = '';
+                        }
+                    }
+                }
                 steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { matrix: JSON.parse(JSON.stringify(dist)) } });
             }
 
@@ -1558,11 +1859,12 @@
                 graphTimeComplexityList.innerHTML = '';
                 timeComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; graphTimeComplexityList.appendChild(li); });
             }
-            if (graphSpaceComplexityList) {
-                graphSpaceComplexityList.innerHTML = '';
+            if (spaceComplexityList) {
+                spaceComplexityList.innerHTML = '';
                 spaceComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; graphSpaceComplexityList.appendChild(li); });
             }
             resetGraphAnimation();
+            loadAlgorithmResources(selectedAlgo); // Load resources for newly selected algorithm
         }
 
         // --- Color Legend Initialization ---
@@ -1612,12 +1914,19 @@
         showArrayAlgoBtn.addEventListener('click', showArrayAlgorithms);
         showGraphAlgoBtn.addEventListener('click', showGraphAlgorithms);
 
+        // Resource button event listeners
+        viewYoutubeArrayBtn.addEventListener('click', () => openResourceModal(algorithmSelect.value, 'youtube'));
+        viewTextbookArrayBtn.addEventListener('click', () => openResourceModal(algorithmSelect.value, 'textbook'));
+        viewYoutubeGraphBtn.addEventListener('click', () => openResourceModal(graphAlgorithmSelect.value, 'youtube'));
+        viewTextbookGraphBtn.addEventListener('click', () => openResourceModal(graphAlgorithmSelect.value, 'textbook'));
+
+
         animationSpeedSlider.addEventListener('input', (event) => {
             animationSpeed = parseInt(event.target.value);
             speedValueSpan.textContent = animationSpeed;
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => { // Make async
             // Assign global variables once DOM is ready for array section
             algoNameSpan = document.getElementById('algoName');
             algoDescriptionP = document.getElementById('algoDescription');
@@ -1629,6 +1938,9 @@
             algoGraphDescriptionP = document.getElementById('algoGraphDescription');
             graphTimeComplexityList = document.getElementById('graphTimeComplexityList');
             graphSpaceComplexityList = document.getElementById('graphSpaceComplexityList');
+
+            // Initialize Firebase first and wait for it
+            await initializeFirebase(); 
 
             // Initialize the color legend
             initializeColorLegend();
