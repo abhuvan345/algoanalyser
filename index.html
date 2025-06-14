@@ -59,12 +59,12 @@
             height: 100%;
         }
         /* Custom styles for inputs to match theme */
-        textarea, select {
+        textarea, select, input[type="number"] {
             background-color: rgba(255, 255, 255, 0.08);
             color: var(--color-space-silver);
             border-color: rgba(138, 138, 255, 0.3);
         }
-        textarea::placeholder {
+        textarea::placeholder, input[type="number"]::placeholder {
             color: rgba(192, 192, 192, 0.6);
         }
         select option {
@@ -98,130 +98,278 @@
             background: var(--color-space-light-blue);
             cursor: pointer;
         }
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-space-silver);
+            border: 1px solid rgba(138, 138, 255, 0.2);
+        }
+        .tab-button.active {
+            background-color: var(--color-space-light-blue);
+            color: var(--color-space-deep-blue);
+            box-shadow: 0 4px 6px (0,0,0,0.2);
+        }
+        .color-box {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            vertical-align: middle;
+            margin-right: 8px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <header class="brand-bg-main text-white text-center py-8 px-4">
         <h1 class="text-3xl md:text-4xl font-black tracking-tight">Algorithm Visualizer</h1>
-        <p class="text-lg md:text-xl font-light mt-2 max-w-3xl mx-auto">Visualize sorting algorithms with interactive animations.</p>
+        <p class="text-lg md:text-xl font-light mt-2 max-w-3xl mx-auto">Visualize sorting and graph algorithms with interactive animations.</p>
     </header>
 
     <main class="container mx-auto p-4 md:p-8">
 
-        <section id="controls" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="card">
-                <h2 class="text-2xl font-bold brand-text-main mb-4">Input Array</h2>
-                <textarea id="arrayInput" rows="3" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter comma-separated distinct integers (e.g., 12, 3, 5, 7, 19)">12, 3, 5, 7, 19, 26, 1, 8</textarea>
-                <div class="mt-4 flex flex-wrap gap-3">
-                    <button id="loadArrayBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Load Array
-                    </button>
-                    <button id="generateRandomArrayBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Generate Random (10 elements)
-                    </button>
-                    <input type="range" id="animationSpeed" min="1" max="100" value="1" class="flex-grow">
-                    <span class="text-gray-300 text-sm">Speed: <span id="speedValue">1</span>x</span>
-                </div>
-                <p id="inputError" class="text-red-400 text-sm mt-2 hidden"></p>
-            </div>
+        <div class="flex justify-center mb-8 gap-4">
+            <button id="showArrayAlgoBtn" class="tab-button active">Array Algorithms</button>
+            <button id="showGraphAlgoBtn" class="tab-button">Graph Algorithms</button>
+        </div>
 
-            <div class="card">
-                <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm & Controls</h2>
-                <div class="mb-4">
-                    <label for="algorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
-                    <select id="algorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
-                        <option value="bubbleSort">Bubble Sort</option>
-                        <option value="selectionSort">Selection Sort</option>
-                        <option value="quickSort">Quick Sort</option>
-                        <option value="mergeSort">Merge Sort</option>
-                        <option value="radixSort">Radix Sort (LSD)</option>
-                        <option value="topologicalSort">Topological Sort (Not a bar sort)</option>
-                    </select>
-                </div>
-                <div class="flex flex-wrap gap-3 mt-4">
-                    <button id="startBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Start Animation
-                    </button>
-                    <button id="pauseBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Pause
-                    </button>
-                    <button id="resetBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                        Reset
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <section id="visualization" class="my-8">
-            <div class="card">
-                <h2 class="text-2xl font-bold brand-text-main mb-4">Visualization</h2>
-                <div class="canvas-container">
-                    <canvas id="algorithmCanvas"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <section id="algorithm-info" class="my-8">
-            <div class="card">
-                <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm Information: <span id="algoName" class="brand-text-accent">Bubble Sort</span></h2>
-                <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
-                <p id="algoDescription" class="text-gray-400 mb-4">
-                    Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
-                        <ul class="list-disc list-inside" id="timeComplexityList">
-                            <li>Best Case: O(n)</li>
-                            <li>Average Case: O(n²)</li>
-                            <li>Worst Case: O(n²)</li>
-                        </ul>
+        <!-- Array Algorithms Section -->
+        <div id="arrayAlgoSection">
+            <section id="controls-array" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Input Array</h2>
+                    <textarea id="arrayInput" rows="3" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter comma-separated distinct integers (e.g., 12, 3, 5, 7, 19)">12, 3, 5, 7, 19, 26, 1, 8</textarea>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <button id="loadArrayBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Load Array
+                        </button>
+                        <button id="generateRandomArrayBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Generate Random (10 elements)
+                        </button>
+                        <input type="range" id="animationSpeed" min="1" max="100" value="1" class="flex-grow">
+                        <span class="text-gray-300 text-sm">Speed: <span id="speedValue">1</span>x</span>
                     </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
-                        <ul class="list-disc list-inside" id="spaceComplexityList">
-                            <li>O(1) auxiliary space</li>
-                        </ul>
+                    <p id="inputError" class="text-red-400 text-sm mt-2 hidden"></p>
+                </div>
+
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm & Controls</h2>
+                    <div class="mb-4">
+                        <label for="algorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                        <select id="algorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
+                            <option value="bubbleSort">Bubble Sort</option>
+                            <option value="selectionSort">Selection Sort</option>
+                            <option value="quickSort">Quick Sort</option>
+                            <option value="mergeSort">Merge Sort</option>
+                            <option value="radixSort">Radix Sort (LSD)</option>
+                            <option value="topologicalSort">Topological Sort (Not a bar sort)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button id="startBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Start Animation
+                        </button>
+                        <button id="pauseBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Pause
+                        </button>
+                        <button id="resetBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Reset
+                        </button>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <section id="visualization-array" class="my-8">
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Visualization</h2>
+                    <div class="canvas-container">
+                        <canvas id="algorithmCanvas"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="algorithm-info-array" class="my-8">
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm Information: <span id="algoName" class="brand-text-accent">Bubble Sort</span></h2>
+                    <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
+                    <p id="algoDescription" class="text-gray-400 mb-4">
+                        Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
+                            <ul class="list-disc list-inside" id="timeComplexityList">
+                                <li>Best Case: O(n)</li>
+                                <li>Average Case: O(n²)</li>
+                                <li>Worst Case: O(n²)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
+                            <ul class="list-disc list-inside" id="spaceComplexityList">
+                                <li>O(1) auxiliary space</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Graph Algorithms Section (Initially Hidden) -->
+        <div id="graphAlgoSection" class="hidden">
+            <section id="controls-graph" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Input Graph (Adjacency Matrix)</h2>
+                    <textarea id="adjacencyMatrixInput" rows="5" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter adjacency matrix rows, space-separated values (e.g., for 3 nodes:&#10;0 1 1&#10;1 0 0&#10;1 0 0)">0 1 1 0
+1 0 0 1
+1 0 0 1
+0 1 1 0</textarea>
+                    <div class="mt-4">
+                        <label for="startNodeInput" class="block text-gray-300 font-medium mb-2">Starting Node (0-indexed):</label>
+                        <input type="number" id="startNodeInput" value="0" min="0" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <button id="loadGraphBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Load Graph
+                        </button>
+                        <button id="generateRandomGraphBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Generate Random (5 nodes)
+                        </button>
+                    </div>
+                    <p id="graphInputError" class="text-red-400 text-sm mt-2 hidden"></p>
+                </div>
+
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Algorithm & Controls</h2>
+                    <div class="mb-4">
+                        <label for="graphAlgorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                        <select id="graphAlgorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
+                            <option value="bfs">Breadth-First Search (BFS)</option>
+                            <option value="dfs">Depth-First Search (DFS)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <button id="startGraphBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Start Animation
+                        </button>
+                        <button id="pauseGraphBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Pause
+                        </button>
+                        <button id="resetGraphBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="visualization-graph" class="my-8">
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Visualization</h2>
+                    <div class="canvas-container">
+                        <canvas id="graphCanvas"></canvas>
+                    </div>
+                    <!-- Color Legend for Graph -->
+                    <div id="graph-legend" class="mt-4 text-gray-300 text-sm grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div class="flex items-center"><span class="color-box" data-color-key="NODE_COLOR"></span><span>Node (Unvisited)</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="VISITED_NODE_COLOR"></span><span>Visited Node</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="CURRENT_NODE_COLOR"></span><span>Current Node</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="QUEUE_STACK_COLOR"></span><span>In Queue/Stack</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="EDGE_COLOR"></span><span>Unvisited Edge</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="TRAVERSED_EDGE_COLOR"></span><span>Traversed Edge</span></div>
+                    </div>
+                    <!-- Queue/Stack Display -->
+                    <div id="queueStackDisplay" class="mt-4 text-gray-300 text-lg font-mono"></div>
+                </div>
+            </section>
+
+            <section id="algorithm-info-graph" class="my-8">
+                <div class="card">
+                    <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Algorithm Information: <span id="algoGraphName" class="brand-text-accent">Breadth-First Search (BFS)</span></h2>
+                    <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
+                    <p id="algoGraphDescription" class="text-gray-400 mb-4">
+                        BFS is an algorithm for traversing or searching tree or graph data structures. It starts at the tree root (or some arbitrary node of a graph, sometimes referred to as a "search key"), and explores all of the neighbor nodes at the present depth prior to moving on to the nodes at the next depth level.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
+                            <ul class="list-disc list-inside" id="graphTimeComplexityList">
+                                <li>O(V + E) (for adjacency list)</li>
+                                <li>O(V²) (for adjacency matrix)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
+                            <ul class="list-disc list-inside" id="graphSpaceComplexityList">
+                                <li>O(V) (for queue and visited array)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
 
     </main>
 
     <footer class="text-center p-8 mt-8 border-t border-gray-700">
-        <p class="text-gray-500">Built for educational purposes.</p>
+        <p class="text-gray-500">Built for educational purposes. Designed by BHUVAN A</p>
     </footer>
 
     <script>
-        const canvas = document.getElementById('algorithmCanvas');
-        const ctx = canvas.getContext('2d');
+        // --- Global Variables and Constants ---
+        const arrayAlgoSection = document.getElementById('arrayAlgoSection');
+        const graphAlgoSection = document.getElementById('graphAlgoSection');
+        const showArrayAlgoBtn = document.getElementById('showArrayAlgoBtn');
+        const showGraphAlgoBtn = document.getElementById('showGraphAlgoBtn');
 
+        // Array Algo Elements
+        const arrayCanvas = document.getElementById('algorithmCanvas');
+        const arrayCtx = arrayCanvas.getContext('2d');
         const arrayInput = document.getElementById('arrayInput');
         const loadArrayBtn = document.getElementById('loadArrayBtn');
         const generateRandomArrayBtn = document.getElementById('generateRandomArrayBtn');
         const animationSpeedSlider = document.getElementById('animationSpeed');
         const speedValueSpan = document.getElementById('speedValue');
-        const inputError = document.getElementById('inputError');
-
+        const arrayInputError = document.getElementById('inputError');
         const algorithmSelect = document.getElementById('algorithmSelect');
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const resetBtn = document.getElementById('resetBtn');
+        let algoNameSpan, algoDescriptionP, timeComplexityList, spaceComplexityList;
 
-        // Global variables for algorithm info elements
-        let algoNameSpan;
-        let algoDescriptionP;
-        let timeComplexityList;
-        let spaceComplexityList;
+        // Graph Algo Elements
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        const adjacencyMatrixInput = document.getElementById('adjacencyMatrixInput');
+        const startNodeInput = document.getElementById('startNodeInput');
+        const loadGraphBtn = document.getElementById('loadGraphBtn');
+        const generateRandomGraphBtn = document.getElementById('generateRandomGraphBtn');
+        const graphInputError = document.getElementById('graphInputError');
+        const graphAlgorithmSelect = document.getElementById('graphAlgorithmSelect');
+        const startGraphBtn = document.getElementById('startGraphBtn');
+        const pauseGraphBtn = document.getElementById('pauseGraphBtn');
+        const resetGraphBtn = document.getElementById('resetGraphBtn');
+        let algoGraphNameSpan, algoGraphDescriptionP, graphTimeComplexityList, graphSpaceComplexityList;
 
         let originalArray = [];
         let currentArray = [];
-        let animationSteps = [];
-        let animationIndex = 0;
-        let animationFrameId = null;
+        let arrayAnimationSteps = [];
+        let arrayAnimationIndex = 0;
+        let arrayAnimationFrameId = null;
+        let isArrayAnimating = false;
+
+        let adjacencyMatrix = [];
+        let graphNodes = [];
+        let graphAnimationSteps = [];
+        let graphAnimationIndex = 0;
+        let graphAnimationFrameId = null;
+        let isGraphAnimating = false;
+        let nodeCount = 0;
+        let startNode = 0;
+
         let animationSpeed = 1; // Default speed to 1x
-        let isAnimating = false;
 
         // Algorithm visualization colors (kept vibrant for clarity)
         const BAR_COLOR = '#00FFFF'; // Cyan
@@ -233,18 +381,68 @@
         const MERGE_COLOR = '#005F73'; // Dark Teal (for merge operations)
         const RADIX_BUCKET_COLOR = '#4B5563'; // Dark Gray (for radix pass visualization)
 
-        // Initial setup
+        // Graph visualization colors
+        const NODE_COLOR = '#00FFFF'; // Cyan
+        const VISITED_NODE_COLOR = '#8A8AFF'; // Light Blue
+        const CURRENT_NODE_COLOR = '#FFD700'; // Yellow
+        const EDGE_COLOR = '#C0C0C0'; // Silver
+        const TRAVERSED_EDGE_COLOR = '#FF69B4'; // Pink (for visited edges)
+        const QUEUE_STACK_COLOR = '#005F73'; // Dark Teal
+
+        // Map for color legend dynamic updates
+        const graphColorMap = {
+            'NODE_COLOR': NODE_COLOR,
+            'VISITED_NODE_COLOR': VISITED_NODE_COLOR,
+            'CURRENT_NODE_COLOR': CURRENT_NODE_COLOR,
+            'QUEUE_STACK_COLOR': QUEUE_STACK_COLOR,
+            'EDGE_COLOR': EDGE_COLOR,
+            'TRAVERSED_EDGE_COLOR': TRAVERSED_EDGE_COLOR
+        };
+
+        // --- UI Switching Logic ---
+        function showArrayAlgorithms() {
+            arrayAlgoSection.classList.remove('hidden');
+            graphAlgoSection.classList.add('hidden');
+            showArrayAlgoBtn.classList.add('active');
+            showGraphAlgoBtn.classList.remove('active');
+            stopAllAnimations(); // Stop any ongoing animations
+            resetArrayAnimation();
+            initializeCanvas(); // Re-init array canvas
+        }
+
+        function showGraphAlgorithms() {
+            arrayAlgoSection.classList.add('hidden');
+            graphAlgoSection.classList.remove('hidden');
+            showArrayAlgoBtn.classList.remove('active');
+            showGraphAlgoBtn.classList.add('active');
+            stopAllAnimations(); // Stop any ongoing animations
+            resetGraphAnimation();
+            initializeGraphCanvas(); // Re-init graph canvas
+        }
+
+        function stopAllAnimations() {
+            if (arrayAnimationFrameId) clearTimeout(arrayAnimationFrameId); // Use clearTimeout for setTimeout
+            if (graphAnimationFrameId) clearTimeout(graphAnimationFrameId); // Use clearTimeout for setTimeout
+            isArrayAnimating = false;
+            isGraphAnimating = false;
+            startBtn.textContent = 'Start Animation';
+            pauseBtn.textContent = 'Pause';
+            startGraphBtn.textContent = 'Start Animation';
+            pauseGraphBtn.textContent = 'Pause';
+        }
+
+        // --- Array Algorithm Functions ---
         function initializeCanvas() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            arrayCanvas.width = arrayCanvas.offsetWidth;
+            arrayCanvas.height = arrayCanvas.offsetHeight;
             loadArray();
         }
 
         function loadArray() {
             const inputValue = arrayInput.value.trim();
             if (!inputValue) {
-                inputError.textContent = 'Array cannot be empty.';
-                inputError.classList.remove('hidden');
+                arrayInputError.textContent = 'Array cannot be empty.';
+                arrayInputError.classList.remove('hidden');
                 return;
             }
 
@@ -252,21 +450,19 @@
             const uniqueNums = new Set(nums);
 
             if (nums.some(isNaN) || nums.length !== uniqueNums.size || nums.length === 0) {
-                inputError.textContent = 'Please enter distinct integers separated by commas. Array cannot be empty.';
-                inputError.classList.remove('hidden');
+                arrayInputError.textContent = 'Please enter distinct integers separated by commas. Array cannot be empty.';
+                arrayInputError.classList.remove('hidden');
                 return;
             }
-            // Check for negative numbers or zero for Radix sort
             if (algorithmSelect.value === 'radixSort' && nums.some(num => num <= 0)) {
-                inputError.textContent = 'Radix Sort requires positive integers greater than zero.';
-                inputError.classList.remove('hidden');
+                arrayInputError.textContent = 'Radix Sort requires positive integers greater than zero.';
+                arrayInputError.classList.remove('hidden');
                 return;
             }
 
-            inputError.classList.add('hidden');
+            arrayInputError.classList.add('hidden');
             originalArray = [...nums];
-            console.log("loadArray: originalArray set to", originalArray); // Debug log
-            resetAnimation();
+            resetArrayAnimation();
         }
 
         function generateRandomArray(count = 10) {
@@ -278,73 +474,56 @@
                 }
             }
             arrayInput.value = arr.join(', ');
-            console.log("Generated array input:", arrayInput.value); // Debug log
-            loadArray(); // Call loadArray to process the new input and reset animation
+            loadArray();
         }
 
         function drawArray(arr, highlight = {}, sortedUntilIndex = -1, radixPass = false) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (arr.length === 0) return; // Prevent division by zero
+            arrayCtx.clearRect(0, 0, arrayCanvas.width, arrayCanvas.height);
+            if (arr.length === 0) return;
 
-            const barWidth = canvas.width / arr.length;
-            const maxVal = Math.max(...originalArray, 1); // Ensure maxVal is at least 1 to avoid division by zero
-            const scaleFactor = (canvas.height - 40) / maxVal; // Leave some padding
+            const barWidth = arrayCanvas.width / arr.length;
+            const maxVal = Math.max(...originalArray, 1);
+            const scaleFactor = (arrayCanvas.height - 40) / maxVal;
 
             for (let i = 0; i < arr.length; i++) {
                 const barHeight = arr[i] * scaleFactor;
                 const x = i * barWidth;
-                const y = canvas.height - barHeight;
+                const y = arrayCanvas.height - barHeight;
 
-                // Default color
-                ctx.fillStyle = BAR_COLOR;
+                arrayCtx.fillStyle = BAR_COLOR;
 
-                // Priority for highlighting:
-                // 1. Swapping elements (most transient)
                 if (highlight.swap && (i === highlight.swap[0] || i === highlight.swap[1])) {
-                    ctx.fillStyle = SWAP_COLOR;
-                }
-                // 2. Elements being compared
-                else if (highlight.compare && (i === highlight.compare[0] || i === highlight.compare[1])) {
-                    ctx.fillStyle = COMPARE_COLOR;
-                }
-                // 3. Specific roles: Pivot, Min element
-                else if (highlight.pivot !== undefined && i === highlight.pivot) {
-                    ctx.fillStyle = PIVOT_COLOR;
+                    arrayCtx.fillStyle = SWAP_COLOR;
+                } else if (highlight.compare && (i === highlight.compare[0] || i === highlight.compare[1])) {
+                    arrayCtx.fillStyle = COMPARE_COLOR;
+                } else if (highlight.pivot !== undefined && i === highlight.pivot) {
+                    arrayCtx.fillStyle = PIVOT_COLOR;
                 } else if (highlight.currentMin !== undefined && i === highlight.currentMin) {
-                    ctx.fillStyle = MIN_COLOR;
-                }
-                // 4. General 'current' element (e.g., in selection sort iterating through, or current element in Radix)
-                else if (highlight.current !== undefined && i === highlight.current) {
-                    ctx.fillStyle = COMPARE_COLOR;
-                }
-                // 5. Phase-specific colors: Merging range, Radix pass
-                else if (highlight.merging && i >= highlight.merging[0] && i <= highlight.merging[1]) {
-                    ctx.fillStyle = MERGE_COLOR;
+                    arrayCtx.fillStyle = MIN_COLOR;
+                } else if (highlight.current !== undefined && i === highlight.current) {
+                    arrayCtx.fillStyle = COMPARE_COLOR;
+                } else if (highlight.merging && i >= highlight.merging[0] && i <= highlight.merging[1]) {
+                    arrayCtx.fillStyle = MERGE_COLOR;
                 } else if (radixPass) {
-                    ctx.fillStyle = RADIX_BUCKET_COLOR;
-                }
-                // 6. Sorted state (lowest priority - only apply if no other transient highlight applies)
-                // This means a sorted bar can still be highlighted as compared/swapped.
-                else if (Array.isArray(sortedUntilIndex)) { // For quicksort, individual sorted indices
+                    arrayCtx.fillStyle = RADIX_BUCKET_COLOR;
+                } else if (Array.isArray(sortedUntilIndex)) {
                     if (sortedUntilIndex.some(idx => i === idx)) {
-                        ctx.fillStyle = SORTED_COLOR;
+                        arrayCtx.fillStyle = SORTED_COLOR;
                     }
-                } else if (i >= sortedUntilIndex && sortedUntilIndex !== -1) { // Standard sorted range
-                    ctx.fillStyle = SORTED_COLOR;
+                } else if (i >= sortedUntilIndex && sortedUntilIndex !== -1) {
+                    arrayCtx.fillStyle = SORTED_COLOR;
                 }
                 
-                ctx.fillRect(x, y, barWidth - 2, barHeight); // -2 for slight gap
+                arrayCtx.fillRect(x, y, barWidth - 2, barHeight);
 
-                ctx.fillStyle = '#C0C0C0'; // Silver text for values
-                ctx.font = `${Math.max(10, barWidth / 4)}px Inter`;
-                ctx.textAlign = 'center';
-                ctx.fillText(arr[i], x + barWidth / 2, canvas.height - barHeight - 5);
+                arrayCtx.fillStyle = '#C0C0C0';
+                arrayCtx.font = `${Math.max(10, barWidth / 4)}px Inter`;
+                arrayCtx.textAlign = 'center';
+                arrayCtx.fillText(arr[i], x + barWidth / 2, arrayCanvas.height - barHeight - 5);
             }
         }
 
-        // --- Sorting Algorithms ---
-
-        function bubbleSort(arr) {
+        function bubbleSort(arr) { /* ... (same as before) ... */
             const steps = [];
             let n = arr.length;
             let a = [...arr];
@@ -364,7 +543,7 @@
                 }
                 steps.push({ array: [...a], sortedUntilIndex: n - 1 - i });
                 if (!swapped) {
-                    for(let k=0; k < n - i -1; k++) { // Mark remaining as sorted
+                    for(let k=0; k < n - i -1; k++) {
                         steps.push({ array: [...a], sortedUntilIndex: n - 1 - k });
                     }
                     break;
@@ -374,7 +553,7 @@
             return steps;
         }
 
-        function selectionSort(arr) {
+        function selectionSort(arr) { /* ... (same as before) ... */
             const steps = [];
             let n = arr.length;
             let a = [...arr];
@@ -402,7 +581,7 @@
             return steps;
         }
 
-        function quickSort(arr) {
+        function quickSort(arr) { /* ... (same as before) ... */
             const steps = [];
             let a = [...arr];
             
@@ -432,22 +611,21 @@
             function sort(arr, low, high) {
                 if (low < high) {
                     let pi = partition(arr, low, high);
-                    steps.push({ array: [...arr], highlight: {}, sortedIndices: [pi] }); // Mark pivot as sorted
+                    steps.push({ array: [...arr], highlight: {}, sortedIndices: [pi] });
 
                     sort(arr, low, pi - 1);
                     sort(arr, pi + 1, high);
                 } else if (low === high) {
-                    steps.push({ array: [...arr], highlight: {}, sortedIndices: [low] }); // Mark single element sub-arrays as sorted
+                    steps.push({ array: [...arr], highlight: {}, sortedIndices: [low] });
                 }
             }
 
             sort(a, 0, a.length - 1);
-            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 }); // Final sorted state
+            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 });
             return steps;
         }
 
-
-        function mergeSort(arr) {
+        function mergeSort(arr) { /* ... (same as before) ... */
             const steps = [];
             let a = [...arr];
 
@@ -476,7 +654,7 @@
                         arr[k] = R[j];
                         j++;
                     }
-                    steps.push({ array: [...arr], highlight: { current: k, merging: [l, r] }, sortedUntilIndex: -1 }); // Show placement
+                    steps.push({ array: [...arr], highlight: { current: k, merging: [l, r] }, sortedUntilIndex: -1 });
                     k++;
                 }
 
@@ -505,229 +683,678 @@
             }
 
             sort(a, 0, a.length - 1);
-            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 }); // Final sorted state
+            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 });
             return steps;
         }
         
-        function radixSort(arr) {
+        function radixSort(arr) { /* ... (same as before) ... */
             const steps = [];
             let a = [...arr];
             const maxVal = Math.max(...a);
-            let exp = 1; // Current digit place value (1s, 10s, 100s, ...)
+            let exp = 1;
 
-            steps.push({ array: [...a], highlight: {}, radixPass: false }); // Initial state
+            steps.push({ array: [...a], highlight: {}, radixPass: false });
 
             while (Math.floor(maxVal / exp) > 0) {
                 const output = new Array(a.length);
-                const count = new Array(10).fill(0); // For digits 0-9
+                const count = new Array(10).fill(0);
 
-                // Count occurrences of digits
                 for (let i = 0; i < a.length; i++) {
                     steps.push({ array: [...a], highlight: { current: i }, radixPass: true });
                     count[Math.floor(a[i] / exp) % 10]++;
                 }
 
-                // Change count[i] so that count[i] now contains actual position of this digit in output[]
                 for (let i = 1; i < 10; i++) {
                     count[i] += count[i - 1];
                 }
 
-                // Build the output array
                 for (let i = a.length - 1; i >= 0; i--) {
                     const digit = Math.floor(a[i] / exp) % 10;
                     output[count[digit] - 1] = a[i];
                     count[digit]--;
-                    steps.push({ array: [...output], highlight: { current: i }, radixPass: true }); // Show elements being placed
+                    steps.push({ array: [...output], highlight: { current: i }, radixPass: true });
                 }
 
-                // Copy the output array to arr[], so that arr[] now contains sorted numbers according to current digit
                 for (let i = 0; i < a.length; i++) {
                     a[i] = output[i];
                 }
-                steps.push({ array: [...a], highlight: {}, radixPass: true }); // After collecting all elements for this pass
+                steps.push({ array: [...a], highlight: {}, radixPass: true });
 
                 exp *= 10;
             }
-            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 }); // Final sorted state
+            steps.push({ array: [...a], sortedUntilIndex: a.length - 1 });
             return steps;
         }
 
-        // --- Animation Control and Drawing ---
-
-        function animate() {
-            if (!isAnimating || animationIndex >= animationSteps.length) {
-                isAnimating = false;
-                cancelAnimationFrame(animationFrameId);
+        function animateArray() {
+            if (!isArrayAnimating || arrayAnimationIndex >= arrayAnimationSteps.length) {
+                isArrayAnimating = false;
+                if (arrayAnimationFrameId) clearTimeout(arrayAnimationFrameId);
                 startBtn.textContent = 'Start Animation';
-                drawArray(currentArray, {}, currentArray.length - 1); // Ensure final state is fully sorted color
+                drawArray(currentArray, {}, currentArray.length - 1);
                 return;
             }
 
-            const step = animationSteps[animationIndex];
+            const step = arrayAnimationSteps[arrayAnimationIndex];
             currentArray = [...step.array];
-            // console.log(`Step ${animationIndex}: Array=${step.array}, Highlight=${JSON.stringify(step.highlight)}, Sorted=${step.sortedUntilIndex || (step.sortedIndices ? step.sortedIndices : -1)}, RadixPass=${step.radixPass}`); // For debugging
             drawArray(currentArray, step.highlight || {}, step.sortedUntilIndex || (step.sortedIndices ? step.sortedIndices : -1), step.radixPass || false);
 
-            animationIndex++;
-            animationFrameId = setTimeout(() => {
-                 requestAnimationFrame(animate);
-            }, 1000 / animationSpeed); // Convert speed slider value to frame delay
+            arrayAnimationIndex++;
+            arrayAnimationFrameId = setTimeout(() => {
+                 requestAnimationFrame(animateArray);
+            }, 1000 / animationSpeed);
         }
 
-        function startAnimation() {
-            if (!isAnimating) {
-                if (animationIndex >= animationSteps.length) {
-                    resetAnimation(); // If animation finished, reset and start over
+        function startArrayAnimation() {
+            if (!isArrayAnimating) {
+                if (arrayAnimationIndex >= arrayAnimationSteps.length) {
+                    resetArrayAnimation();
                 }
-                isAnimating = true;
+                isArrayAnimating = true;
                 startBtn.textContent = 'Animating...';
                 pauseBtn.textContent = 'Pause';
-                animate();
+                animateArray();
             }
         }
 
-        function pauseAnimation() {
-            isAnimating = false;
-            cancelAnimationFrame(animationFrameId);
+        function pauseArrayAnimation() {
+            isArrayAnimating = false;
+            if (arrayAnimationFrameId) clearTimeout(arrayAnimationFrameId);
             startBtn.textContent = 'Resume Animation';
             pauseBtn.textContent = 'Paused';
         }
 
-        function resetAnimation() {
-            isAnimating = false;
-            cancelAnimationFrame(animationFrameId);
+        function resetArrayAnimation() {
+            isArrayAnimating = false;
+            if (arrayAnimationFrameId) clearTimeout(arrayAnimationFrameId);
             currentArray = [...originalArray];
-            animationIndex = 0;
+            arrayAnimationIndex = 0;
             startBtn.textContent = 'Start Animation';
             pauseBtn.textContent = 'Pause';
             drawArray(currentArray);
             
-            // Re-generate steps for the currently selected algorithm
             const selectedAlgo = algorithmSelect.value;
             switch(selectedAlgo) {
-                case 'bubbleSort':
-                    animationSteps = bubbleSort([...originalArray]);
-                    break;
-                case 'selectionSort':
-                    animationSteps = selectionSort([...originalArray]);
-                    break;
-                case 'quickSort':
-                    animationSteps = quickSort([...originalArray]);
-                    break;
-                case 'mergeSort':
-                    animationSteps = mergeSort([...originalArray]);
-                    break;
-                case 'radixSort':
-                    animationSteps = radixSort([...originalArray]);
-                    break;
-                default:
-                    animationSteps = [];
+                case 'bubbleSort': arrayAnimationSteps = bubbleSort([...originalArray]); break;
+                case 'selectionSort': arrayAnimationSteps = selectionSort([...originalArray]); break;
+                case 'quickSort': arrayAnimationSteps = quickSort([...originalArray]); break;
+                case 'mergeSort': arrayAnimationSteps = mergeSort([...originalArray]); break;
+                case 'radixSort': arrayAnimationSteps = radixSort([...originalArray]); break;
+                default: arrayAnimationSteps = []; break;
             }
         }
 
-        // --- Event Listeners ---
-        loadArrayBtn.addEventListener('click', loadArray);
-        generateRandomArrayBtn.addEventListener('click', generateRandomArray);
-        startBtn.addEventListener('click', startAnimation);
-        pauseBtn.addEventListener('click', pauseAnimation);
-        resetBtn.addEventListener('click', resetAnimation);
-
-        animationSpeedSlider.addEventListener('input', (event) => {
-            animationSpeed = parseInt(event.target.value);
-            speedValueSpan.textContent = animationSpeed;
-            if (isAnimating) {
-                cancelAnimationFrame(animationFrameId);
-                animate();
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // Assign global variables once DOM is ready
-            algoNameSpan = document.getElementById('algoName');
-            algoDescriptionP = document.getElementById('algoDescription');
-            timeComplexityList = document.getElementById('timeComplexityList'); // Using ID directly
-            spaceComplexityList = document.getElementById('spaceComplexityList'); // Using ID directly
-
-            // Set initial speed slider value and text
-            animationSpeedSlider.value = animationSpeed;
-            speedValueSpan.textContent = animationSpeed;
-            
-            initializeCanvas();
-            // Trigger change to set initial algorithm info for Bubble Sort
-            // This needs to be a function that gets the correct elements
-            updateAlgorithmInfo(algorithmSelect.value);
-        });
-
-        // Moved algorithm info update logic into a separate function
-        function updateAlgorithmInfo(selectedAlgo) {
+        function updateArrayAlgorithmInfo(selectedAlgo) {
             let description = '';
             let timeComplexity = [];
             let spaceComplexity = [];
 
             if (selectedAlgo === 'bubbleSort') {
+                algoNameSpan.textContent = 'Bubble Sort';
                 description = 'Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.';
                 timeComplexity = ['Best Case: O(n)', 'Average Case: O(n²)', 'Worst Case: O(n²)'];
                 spaceComplexity = ['O(1) auxiliary space'];
             } else if (selectedAlgo === 'selectionSort') {
+                algoNameSpan.textContent = 'Selection Sort';
                 description = 'Selection Sort sorts an array by repeatedly finding the minimum element from the unsorted part and putting it at the beginning. The algorithm maintains two sub-arrays in a given array: (1) The sub-array which is already sorted, and (2) The remaining sub-array which is unsorted.';
                 timeComplexity = ['Best Case: O(n²)', 'Average Case: O(n²)', 'Worst Case: O(n²)'];
                 spaceComplexity = ['O(1) auxiliary space'];
             } else if (selectedAlgo === 'quickSort') {
+                algoNameSpan.textContent = 'Quick Sort';
                 description = 'Quick Sort is a highly efficient, comparison-based sorting algorithm that uses a divide-and-conquer approach. It picks an element as a pivot and partitions the given array around the picked pivot. The process is then recursively applied to the sub-arrays.';
                 timeComplexity = ['Best Case: O(n log n)', 'Average Case: O(n log n)', 'Worst Case: O(n²)'];
                 spaceComplexity = ['O(log n) for recursion stack (average)', 'O(n) for recursion stack (worst)'];
             } else if (selectedAlgo === 'mergeSort') {
+                algoNameSpan.textContent = 'Merge Sort';
                 description = 'Merge Sort is a divide-and-conquer algorithm. It divides the input array into two halves, calls itself for the two halves, and then merges the two sorted halves. The merge() function is used for merging two halves.';
                 timeComplexity = ['Best Case: O(n log n)', 'Average Case: O(n log n)', 'Worst Case: O(n log n)'];
                 spaceComplexity = ['O(n) auxiliary space'];
             } else if (selectedAlgo === 'radixSort') {
+                algoNameSpan.textContent = 'Radix Sort (LSD)';
                 description = 'Radix Sort is a non-comparison based sorting algorithm. It sorts integers by processing individual digits. It works by grouping numbers by the same digit (e.g., 1s place, then 10s place, and so on) and then repeatedly distributing and collecting elements into buckets.';
                 timeComplexity = ['Best Case: O(nk)', 'Average Case: O(nk)', 'Worst Case: O(nk) (where k is number of digits)'];
                 spaceComplexity = ['O(n + k) auxiliary space'];
             } else if (selectedAlgo === 'topologicalSort') {
+                algoNameSpan.textContent = 'Topological Sort';
                 description = 'Topological Sort is an algorithm for ordering the vertices of a directed acyclic graph (DAG) such that for every directed edge from vertex `u` to vertex `v`, `u` comes before `v` in the ordering. This algorithm is not applicable to simple array sorting visualizations as presented here.';
                 timeComplexity = ['O(V + E) (V=vertices, E=edges)'];
                 spaceComplexity = ['O(V + E)'];
             }
 
-            if (algoNameSpan) algoNameSpan.textContent = selectedAlgo.replace(/([A-Z])/g, ' $1').trim().replace('Sort', ' Sort'); // Format algo name
+            if (algoNameSpan) algoNameSpan.textContent = selectedAlgo.replace(/([A-Z])/g, ' $1').trim().replace('Sort', ' Sort');
             if (algoDescriptionP) algoDescriptionP.textContent = description;
 
-            // Update Time Complexity
             if (timeComplexityList) {
                 timeComplexityList.innerHTML = '';
-                timeComplexity.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = item;
-                    timeComplexityList.appendChild(li);
-                });
+                timeComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; timeComplexityList.appendChild(li); });
             }
-
-            // Update Space Complexity
             if (spaceComplexityList) {
                 spaceComplexityList.innerHTML = '';
-                spaceComplexity.forEach(item => {
-                    const li = document.createElement('li');
-                    li.textContent = item;
-                    spaceComplexityList.appendChild(li);
+                spaceComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; spaceComplexityList.appendChild(li); });
+            }
+
+            loadArray();
+        }
+
+        // --- Graph Algorithm Functions ---
+
+        function initializeGraphCanvas() {
+            graphCanvas.width = graphCanvas.offsetWidth;
+            graphCanvas.height = graphCanvas.offsetHeight;
+            loadGraph();
+        }
+
+        function loadGraph() {
+            const matrixStr = adjacencyMatrixInput.value.trim();
+            if (!matrixStr) {
+                graphInputError.textContent = 'Adjacency matrix cannot be empty.';
+                graphInputError.classList.remove('hidden');
+                return;
+            }
+
+            const rows = matrixStr.split('\n').map(row => row.trim().split(' ').map(Number));
+            const N = rows.length;
+            if (N === 0) {
+                graphInputError.textContent = 'Invalid matrix format. No rows found.';
+                graphInputError.classList.remove('hidden');
+                return;
+            }
+
+            let isValidMatrix = true;
+            for (let i = 0; i < N; i++) {
+                if (rows[i].length !== N || rows[i].some(isNaN) || rows[i].some(val => val !== 0 && val !== 1)) {
+                    isValidMatrix = false;
+                    break;
+                }
+            }
+
+            if (!isValidMatrix) {
+                graphInputError.textContent = 'Invalid matrix: Must be a square matrix of 0s and 1s.';
+                graphInputError.classList.remove('hidden');
+                return;
+            }
+            
+            // Check for undirected graph (symmetric matrix)
+            let isSymmetric = true;
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    if (rows[i][j] !== rows[j][i]) {
+                        isSymmetric = false;
+                        break;
+                    }
+                }
+                if (!isSymmetric) break;
+            }
+
+            if (!isSymmetric) {
+                graphInputError.textContent = 'Graph must be undirected (adjacency matrix must be symmetric).';
+                graphInputError.classList.remove('hidden');
+                return;
+            }
+
+
+            nodeCount = N;
+            adjacencyMatrix = rows;
+            graphInputError.classList.add('hidden');
+
+            const selectedStartNode = parseInt(startNodeInput.value);
+            if (isNaN(selectedStartNode) || selectedStartNode < 0 || selectedStartNode >= nodeCount) {
+                graphInputError.textContent = `Starting node must be between 0 and ${nodeCount - 1}.`;
+                graphInputError.classList.remove('hidden');
+                return;
+            }
+            startNode = selectedStartNode;
+
+            graphNodes = [];
+            const centerX = graphCanvas.width / 2;
+            const centerY = graphCanvas.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.7; // Radius for circular layout
+
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (i / nodeCount) * 2 * Math.PI;
+                graphNodes.push({
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle),
+                    label: i,
+                    visited: false,
+                    isCurrent: false,
+                    isQueueStack: false,
+                    statusText: '' // New property for status text
                 });
             }
 
-            loadArray(); // Reload array to ensure correct initial state for new algorithm
+            resetGraphAnimation();
         }
+
+        function generateRandomGraph(count = 5) {
+            const matrix = Array(count).fill(0).map(() => Array(count).fill(0));
+            for (let i = 0; i < count; i++) {
+                for (let j = i + 1; j < count; j++) { // Ensure symmetric for undirected
+                    if (Math.random() > 0.6) { // ~40% chance of an edge
+                        matrix[i][j] = 1;
+                        matrix[j][i] = 1;
+                    }
+                }
+            }
+            adjacencyMatrixInput.value = matrix.map(row => row.join(' ')).join('\n');
+            startNodeInput.value = Math.floor(Math.random() * count);
+            loadGraph();
+        }
+
+        // Function to draw an arrowhead
+        function drawArrowhead(ctx, x1, y1, x2, y2, radius, color) {
+            const headlen = 10; // length of arrowhead sides
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+
+            // Adjust x2, y2 to be at the edge of the target node, not its center
+            const adjustedX2 = x2 - radius * Math.cos(angle);
+            const adjustedY2 = y2 - radius * Math.sin(angle);
+
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color; // Fill the arrowhead
+            ctx.lineWidth = 2; // Thicker for visibility
+
+            ctx.beginPath();
+            ctx.moveTo(adjustedX2, adjustedY2);
+            ctx.lineTo(adjustedX2 - headlen * Math.cos(angle - Math.PI / 6), adjustedY2 - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(adjustedX2 - headlen * Math.cos(angle + Math.PI / 6), adjustedY2 - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath(); // Close the triangle path
+            ctx.fill(); // Fill the triangle
+        }
+
+        function drawGraph(nodes, matrix, highlight = {}) {
+            console.log("drawGraph called with highlight:", highlight); // Debug log
+            graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+            // Draw edges first
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) { // Loop for undirected graph, draw each edge once
+                    if (matrix[i][j] === 1) {
+                        graphCtx.beginPath();
+                        graphCtx.moveTo(nodes[i].x, nodes[i].y);
+                        graphCtx.lineTo(nodes[j].x, nodes[j].y);
+                        graphCtx.strokeStyle = EDGE_COLOR;
+                        graphCtx.lineWidth = 1;
+
+                        let isHighlightedEdge = false;
+                        
+                        if (highlight.traversedEdge) {
+                            if (highlight.traversedEdge[0] === i && highlight.traversedEdge[1] === j) {
+                                isHighlightedEdge = true;
+                            } else if (highlight.traversedEdge[0] === j && highlight.traversedEdge[1] === i) {
+                                isHighlightedEdge = true;
+                            }
+                        }
+
+                        if (isHighlightedEdge) {
+                            graphCtx.strokeStyle = TRAVERSED_EDGE_COLOR;
+                            graphCtx.lineWidth = 3;
+                        }
+                        graphCtx.stroke();
+
+                        // Draw arrowhead if edge is traversed
+                        if (isHighlightedEdge) {
+                            const startNodeCoord = nodes[highlight.traversedEdge[0]];
+                            const endNodeCoord = nodes[highlight.traversedEdge[1]];
+                            drawArrowhead(graphCtx, startNodeCoord.x, startNodeCoord.y, endNodeCoord.x, endNodeCoord.y, 20, TRAVERSED_EDGE_COLOR); // 20 is nodeRadius
+                        }
+                    }
+                }
+            }
+
+            // Draw nodes
+            const nodeRadius = 20;
+            for (let i = 0; i < nodeCount; i++) {
+                graphCtx.beginPath();
+                graphCtx.arc(nodes[i].x, nodes[i].y, nodeRadius, 0, 2 * Math.PI);
+                graphCtx.fillStyle = NODE_COLOR;
+
+                if (nodes[i].isCurrent) {
+                    graphCtx.fillStyle = CURRENT_NODE_COLOR;
+                } else if (nodes[i].visited) {
+                    graphCtx.fillStyle = VISITED_NODE_COLOR;
+                } else if (nodes[i].isQueueStack) {
+                    graphCtx.fillStyle = QUEUE_STACK_COLOR;
+                }
+
+                graphCtx.fill();
+                graphCtx.strokeStyle = '#FFFFFF';
+                graphCtx.lineWidth = 2;
+                graphCtx.stroke();
+
+                // Draw node label (number)
+                graphCtx.fillStyle = '#1A0A3D'; // Dark text for node labels
+                graphCtx.font = '14px Inter';
+                graphCtx.textAlign = 'center';
+                graphCtx.textBaseline = 'middle';
+                graphCtx.fillText(nodes[i].label, nodes[i].x, nodes[i].y);
+
+                // Draw status text (V, Q, S, C) - adjusted position
+                if (nodes[i].statusText) {
+                    graphCtx.fillStyle = '#FFFFFF'; // White text for status
+                    graphCtx.font = 'bold 10px Inter';
+                    graphCtx.textAlign = 'center';
+                    graphCtx.textBaseline = 'middle';
+                    // Position slightly above and to the right of the node, with increased offset
+                    graphCtx.fillText(nodes[i].statusText, nodes[i].x + nodeRadius * 0.7 + 8, nodes[i].y - nodeRadius * 0.7 - 8);
+                }
+            }
+        }
+
+        // BFS Algorithm
+        function bfs(matrix, startNodeIdx) {
+            const steps = [];
+            const N = matrix.length;
+            let currentNodesState = JSON.parse(JSON.stringify(graphNodes));
+            
+            const queue = [];
+            const visited = new Array(N).fill(false);
+
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {}, queue: [] });
+
+            queue.push(startNodeIdx);
+            visited[startNodeIdx] = true;
+            currentNodesState[startNodeIdx].visited = true;
+            currentNodesState[startNodeIdx].isQueueStack = true;
+            currentNodesState[startNodeIdx].statusText = 'Q';
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: startNodeIdx }, queue: [...queue] });
+
+            while (queue.length > 0) {
+                const u = queue.shift();
+                currentNodesState[u].isQueueStack = false;
+                currentNodesState[u].isCurrent = true;
+                currentNodesState[u].statusText = 'C';
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u }, queue: [...queue] });
+
+                for (let v = 0; v < N; v++) {
+                    if (matrix[u][v] === 1) {
+                        if (!visited[v]) {
+                            visited[v] = true;
+                            queue.push(v);
+                            currentNodesState[v].visited = true;
+                            currentNodesState[v].isQueueStack = true;
+                            currentNodesState[v].statusText = 'Q';
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u, v], neighbor: v }, queue: [...queue] });
+                        } else {
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u, v] }, queue: [...queue] });
+                        }
+                    }
+                }
+                currentNodesState[u].isCurrent = false;
+                currentNodesState[u].statusText = 'V';
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {}, queue: [...queue] });
+            }
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {} });
+            return steps;
+        }
+
+        // DFS Algorithm
+        function dfs(matrix, startNodeIdx) {
+            const steps = [];
+            const N = matrix.length;
+            let currentNodesState = JSON.parse(JSON.stringify(graphNodes));
+            const visited = new Array(N).fill(false);
+            const stack = [];
+
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {}, stack: [] });
+
+            function dfs_recursive(u) {
+                visited[u] = true;
+                currentNodesState[u].visited = true;
+                currentNodesState[u].isCurrent = true;
+                currentNodesState[u].statusText = 'C';
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u }, stack: [...stack] });
+                
+                for (let v = 0; v < N; v++) {
+                    if (matrix[u][v] === 1) {
+                        steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u, v] }, stack: [...stack] });
+                        if (!visited[v]) {
+                            stack.push(v);
+                            currentNodesState[v].isQueueStack = true;
+                            currentNodesState[v].statusText = 'S';
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u,v], pushed: v }, stack: [...stack] });
+                            currentNodesState[v].isQueueStack = false;
+                            dfs_recursive(v);
+                            currentNodesState[u].isCurrent = true;
+                            currentNodesState[u].statusText = 'C';
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u }, stack: [...stack] });
+                        }
+                    }
+                }
+                currentNodesState[u].isCurrent = false;
+                currentNodesState[u].statusText = 'V';
+                if (stack.length > 0 && stack[stack.length - 1] === u) {
+                    stack.pop();
+                }
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {}, stack: [...stack] });
+            }
+            
+            stack.push(startNodeIdx);
+            currentNodesState[startNodeIdx].isQueueStack = true;
+            currentNodesState[startNodeIdx].statusText = 'S';
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: startNodeIdx }, stack: [...stack] });
+            currentNodesState[startNodeIdx].isQueueStack = false;
+
+            dfs_recursive(startNodeIdx);
+
+            for(let i=0; i<N; i++) {
+                if(visited[i] && currentNodesState[i].statusText !== 'V') {
+                    currentNodesState[i].statusText = 'V';
+                    steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {} });
+                }
+            }
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {} });
+            return steps;
+        }
+
+        function animateGraph() {
+            if (!isGraphAnimating || graphAnimationIndex >= graphAnimationSteps.length) {
+                isGraphAnimating = false;
+                if (graphAnimationFrameId) clearTimeout(graphAnimationFrameId);
+                startGraphBtn.textContent = 'Start Animation';
+                drawGraph(graphNodes, adjacencyMatrix, {});
+                return;
+            }
+
+            const step = graphAnimationSteps[graphAnimationIndex];
+            graphNodes = JSON.parse(JSON.stringify(step.nodes));
+            drawGraph(graphNodes, adjacencyMatrix, step.highlight || {});
+
+            const queueStackDiv = document.getElementById('queueStackDisplay');
+            if (queueStackDiv) {
+                const currentAlgo = graphAlgorithmSelect.value;
+                if (currentAlgo === 'bfs' && step.queue) {
+                    queueStackDiv.textContent = `Queue: [${step.queue.join(', ')}]`;
+                } else if (currentAlgo === 'dfs' && step.stack) {
+                    queueStackDiv.textContent = `Stack: [${step.stack.join(', ')}]`;
+                } else {
+                    queueStackDiv.textContent = '';
+                }
+            }
+
+            graphAnimationIndex++;
+            graphAnimationFrameId = setTimeout(() => {
+                 requestAnimationFrame(animateGraph);
+            }, 1000 / animationSpeed);
+        }
+
+        function startGraphAnimation() {
+            if (!isGraphAnimating) {
+                if (graphAnimationIndex >= graphAnimationSteps.length) {
+                    resetGraphAnimation();
+                }
+                if (graphAnimationSteps.length === 0) {
+                    graphInputError.textContent = "No animation steps generated. Please load a valid graph.";
+                    graphInputError.classList.remove('hidden');
+                    return;
+                }
+                isGraphAnimating = true;
+                startGraphBtn.textContent = 'Animating...';
+                pauseGraphBtn.textContent = 'Pause';
+                animateGraph();
+            }
+        }
+
+        function pauseGraphAnimation() {
+            isGraphAnimating = false;
+            if (graphAnimationFrameId) clearTimeout(graphAnimationFrameId);
+            startGraphBtn.textContent = 'Resume Animation';
+            pauseGraphBtn.textContent = 'Paused';
+        }
+
+        function resetGraphAnimation() {
+            isGraphAnimating = false;
+            if (graphAnimationFrameId) clearTimeout(graphAnimationFrameId);
+            graphAnimationIndex = 0;
+            startGraphBtn.textContent = 'Start Animation';
+            pauseGraphBtn.textContent = 'Pause';
+            
+            if (graphNodes.length > 0) {
+                graphNodes.forEach(node => {
+                    node.visited = false;
+                    node.isCurrent = false;
+                    node.isQueueStack = false;
+                    node.statusText = '';
+                });
+                drawGraph(graphNodes, adjacencyMatrix, {});
+            }
+
+            const queueStackDiv = document.getElementById('queueStackDisplay');
+            if (queueStackDiv) queueStackDiv.textContent = '';
+
+            const selectedGraphAlgo = graphAlgorithmSelect.value;
+            if (nodeCount > 0) {
+                if (selectedGraphAlgo === 'bfs') {
+                    graphAnimationSteps = bfs(adjacencyMatrix, startNode);
+                } else if (selectedGraphAlgo === 'dfs') {
+                    graphAnimationSteps = dfs(adjacencyMatrix, startNode);
+                }
+            } else {
+                graphAnimationSteps = [];
+            }
+        }
+
+        function updateGraphAlgorithmInfo(selectedAlgo) {
+            let description = '';
+            let timeComplexity = [];
+            let spaceComplexity = [];
+
+            if (selectedAlgo === 'bfs') {
+                algoGraphNameSpan.textContent = 'Breadth-First Search (BFS)';
+                description = 'BFS is an algorithm for traversing or searching tree or graph data structures. It starts at the tree root (or some arbitrary node of a graph, sometimes referred to as a "search key"), and explores all of the neighbor nodes at the present depth prior to moving on to the nodes at the next depth level.';
+                timeComplexity = ['O(V + E) (for adjacency list)', 'O(V²) (for adjacency matrix)'];
+                spaceComplexity = ['O(V) (for queue and visited array)'];
+            } else if (selectedAlgo === 'dfs') {
+                algoGraphNameSpan.textContent = 'Depth-First Search (DFS)';
+                description = 'DFS is an algorithm for traversing or searching tree or graph data structures. It starts at the root (or selecting some arbitrary node as the root in the case of a graph) and explores as far as possible along each branch before backtracking. It uses a stack to remember to get to the next vertex to start a search when a dead end occurs in any iteration.';
+                timeComplexity = ['O(V + E) (for adjacency list)', 'O(V²) (for adjacency matrix)'];
+                spaceComplexity = ['O(V) (for recursion stack / explicit stack and visited array)'];
+            }
+
+            if (algoGraphNameSpan) algoGraphNameSpan.textContent = selectedAlgo.toUpperCase();
+            if (algoGraphDescriptionP) algoGraphDescriptionP.textContent = description;
+
+            if (graphTimeComplexityList) {
+                graphTimeComplexityList.innerHTML = '';
+                timeComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; graphTimeComplexityList.appendChild(li); });
+            }
+            if (graphSpaceComplexityList) {
+                graphSpaceComplexityList.innerHTML = '';
+                spaceComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; graphSpaceComplexityList.appendChild(li); });
+            }
+            resetGraphAnimation();
+        }
+
+        // --- Color Legend Initialization ---
+        function initializeColorLegend() {
+            console.log("Initializing color legend..."); // Debug log
+            const colorBoxes = document.querySelectorAll('#graph-legend .color-box');
+            colorBoxes.forEach(box => {
+                const colorKey = box.dataset.colorKey;
+                if (graphColorMap[colorKey]) {
+                    box.style.backgroundColor = graphColorMap[colorKey];
+                    console.log(`Setting color for ${colorKey}: ${graphColorMap[colorKey]}`); // Debug log
+                } else {
+                    console.warn(`Color key '${colorKey}' not found in graphColorMap.`);
+                }
+            });
+        }
+
+        // --- Event Listeners and Initial Setup ---
+        
+        loadArrayBtn.addEventListener('click', loadArray);
+        generateRandomArrayBtn.addEventListener('click', generateRandomArray);
+        startBtn.addEventListener('click', startArrayAnimation);
+        pauseBtn.addEventListener('click', pauseArrayAnimation);
+        resetBtn.addEventListener('click', resetArrayAnimation);
 
         algorithmSelect.addEventListener('change', (event) => {
             try {
-                updateAlgorithmInfo(event.target.value);
+                updateArrayAlgorithmInfo(event.target.value);
             } catch (error) {
-                console.error("Error updating algorithm info or loading array on algorithm change:", error);
-                // In a production environment, you might display a user-friendly error message,
-                // e.g., inputError.textContent = "An error occurred while changing algorithm. Please try again.";
-                // inputError.classList.remove('hidden');
+                console.error("Error updating array algorithm info or loading array on algorithm change:", error);
             }
         });
 
-        window.addEventListener('resize', initializeCanvas);
+        // Graph Event Listeners
+        loadGraphBtn.addEventListener('click', loadGraph);
+        generateRandomGraphBtn.addEventListener('click', generateRandomGraph);
+        startGraphBtn.addEventListener('click', startGraphAnimation);
+        pauseGraphBtn.addEventListener('click', pauseGraphAnimation);
+        resetGraphBtn.addEventListener('click', resetGraphAnimation);
+        
+        graphAlgorithmSelect.addEventListener('change', (event) => {
+            try {
+                updateGraphAlgorithmInfo(event.target.value);
+            } catch (error) {
+                console.error("Error updating graph algorithm info on algorithm change:", error);
+            }
+        });
+
+        showArrayAlgoBtn.addEventListener('click', showArrayAlgorithms);
+        showGraphAlgoBtn.addEventListener('click', showGraphAlgorithms);
+
+        animationSpeedSlider.addEventListener('input', (event) => {
+            animationSpeed = parseInt(event.target.value);
+            speedValueSpan.textContent = animationSpeed;
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Assign global variables once DOM is ready for array section
+            algoNameSpan = document.getElementById('algoName');
+            algoDescriptionP = document.getElementById('algoDescription');
+            timeComplexityList = document.getElementById('timeComplexityList');
+            spaceComplexityList = document.getElementById('spaceComplexityList');
+
+            // Assign global variables once DOM is ready for graph section
+            algoGraphNameSpan = document.getElementById('algoGraphName');
+            algoGraphDescriptionP = document.getElementById('algoGraphDescription');
+            graphTimeComplexityList = document.getElementById('graphTimeComplexityList');
+            graphSpaceComplexityList = document.getElementById('graphSpaceComplexityList');
+
+            // Initialize the color legend
+            initializeColorLegend();
+
+            animationSpeedSlider.value = animationSpeed;
+            speedValueSpan.textContent = animationSpeed;
+            
+            // Initialize the correct canvas based on the default tab
+            if (!graphAlgoSection.classList.contains('hidden')) {
+                initializeGraphCanvas();
+                updateGraphAlgorithmInfo(graphAlgorithmSelect.value);
+            } else {
+                initializeCanvas(); // Initialize array canvas
+                updateArrayAlgorithmInfo(algorithmSelect.value);
+            }
+        });
+        
+        window.addEventListener('resize', () => {
+            if (!graphAlgoSection.classList.contains('hidden')) {
+                initializeGraphCanvas();
+            } else {
+                initializeCanvas();
+            }
+        });
     </script>
 </body>
 </html>
