@@ -177,7 +177,7 @@
     </div>
 
     <script type="module">
-        console.log("Admin panel script block loaded."); // New debugging line
+        console.log("Admin panel script block loaded.");
 
         // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -299,6 +299,7 @@
 
         // Function to fetch and populate data for the selected algorithm
         async function loadAlgorithmData() {
+            await firebaseReadyPromise; // Ensure Firebase is initialized and user is authenticated
             const selectedAlgoId = algoSelect.value;
             // Check userId explicitly (after Firebase is confirmed ready by initializeFirebase)
             if (!db || userId === null) { 
@@ -375,6 +376,7 @@
 
         // Function to save all resources for the current algorithm
         saveResourcesBtn.addEventListener('click', async () => {
+            await firebaseReadyPromise; // Ensure Firebase is initialized and user is authenticated
             const selectedAlgoId = algoSelect.value;
             // Check userId explicitly (after Firebase is confirmed ready by initializeFirebase)
             if (!db || userId === null) { 
