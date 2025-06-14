@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Algorithm Resources</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Space Theme Color Palette */
+        :root {
+            --color-space-deep-blue: #08001F; /* Very dark blue, almost black */
+            --color-space-dark-purple: #1A0A3D; /* Deep purple for header/darker elements */
+            --color-space-light-blue: #8A8AFF; /* Lighter blue for primary text/buttons */
+            --color-space-pink: #FF69B4; /* Vibrant pink for accents/reset button */
+            --color-space-yellow: #FFD700; /* Star yellow for accents/pause button */
+            --color-space-silver: #C0C0C0; /* Silver for general text */
+            --color-space-cyan: #00FFFF; /* Cyan for start button */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-space-deep-blue);
+            background-image: url('https://images.unsplash.com/photo-1451187580459-49ceb8e25032?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-position: center center;
+            color: var(--color-space-silver);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .brand-bg-main { background-color: var(--color-space-dark-purple); }
+        .brand-text-main { color: var(--color-space-light-blue); }
+        .card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            border: 1px solid rgba(138, 138, 255, 0.2);
+        }
+        input[type="text"], input[type="password"], input[type="url"], select {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: var(--color-space-silver);
+            border-color: rgba(138, 138, 255, 0.3);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); /* Added shadow for all buttons */
+        }
+        .btn-primary {
+            background-color: var(--color-space-light-blue);
+            color: var(--color-space-deep-blue);
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: var(--color-space-light-blue);
+            filter: brightness(1.1);
+            transform: translateY(-2px); /* Subtle lift on hover */
+        }
+        .btn-danger {
+            background-color: var(--color-space-pink);
+            color: white;
+            border: none;
+        }
+        .btn-danger:hover {
+            background-color: var(--color-space-pink);
+            filter: brightness(0.9);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-space-silver);
+            border: 1px solid rgba(138, 138, 255, 0.2);
+        }
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        /* Focus styles for buttons for accessibility */
+        button:focus {
+            outline: 2px solid var(--color-space-yellow);
+            outline-offset: 2px;
+        }
+        .message-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .message-box.show {
+            opacity: 1;
+        }
+        .message-box.error {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #FFB3B3;
+        }
+        .message-box.success {
+            background-color: rgba(0, 255, 0, 0.1);
+            color: #B3FFB3;
+        }
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginSection" class="w-full max-w-md">
+        <div class="card p-8">
+            <h2 class="text-3xl font-bold brand-text-main mb-6 text-center">Admin Login</h2>
+            <input type="text" id="adminUsername" placeholder="Username (admin)">
+            <input type="password" id="adminPassword" placeholder="Password (admin)">
+            <button id="loginBtn" class="btn-primary w-full mt-4">Login</button>
+            <div id="loginMessage" class="message-box hidden"></div>
+        </div>
+    </div>
+
+    <div id="adminPanelSection" class="w-full max-w-3xl mt-8 hidden">
+        <div class="card p-8">
+            <h2 class="text-3xl font-bold brand-text-main mb-6 text-center">Manage Algorithm Resources</h2>
+            
+            <div class="mb-4">
+                <label for="algoSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                <select id="algoSelect" class="w-full p-2 border rounded-md">
+                    <!-- Array Algorithms -->
+                    <option value="bubbleSort">Bubble Sort</option>
+                    <option value="selectionSort">Selection Sort</option>
+                    <option value="quickSort">Quick Sort</option>
+                    <option value="mergeSort">Merge Sort</option>
+                    <option value="radixSort">Radix Sort (LSD)</option>
+                    <!-- Graph Algorithms -->
+                    <option value="bfs">Breadth-First Search (BFS)</option>
+                    <option value="dfs">Depth-First Search (DFS)</option>
+                    <option value="dijkstra">Dijkstra's Algorithm</option>
+                    <option value="prim">Prim's Algorithm</option>
+                    <option value="floydWarshall">Floyd-Warshall Algorithm</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-300 mb-3">YouTube Video Link</h3>
+                <input type="url" id="youtubeLink" placeholder="Enter YouTube video URL">
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-300 mb-3">Textbook Resources</h3>
+                <div id="textbookResourcesContainer">
+                    <!-- Dynamic textbook inputs will go here -->
+                </div>
+                <button id="addTextbookBtn" class="btn-secondary mt-3">Add Textbook Resource</button>
+            </div>
+
+            <button id="saveResourcesBtn" class="btn-primary w-full">Save Resources</button>
+            <div id="saveMessage" class="message-box hidden"></div>
+            <button id="logoutBtn" class="btn-secondary w-full mt-4">Logout</button>
+        </div>
+    </div>
+
+    <script type="module">
+        console.log("Admin panel script block loaded."); // New debugging line
+
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // DOM Elements
+        const loginSection = document.getElementById('loginSection');
+        const adminPanelSection = document.getElementById('adminPanelSection');
+        const adminUsernameInput = document.getElementById('adminUsername');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginMessage = document.getElementById('loginMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const algoSelect = document.getElementById('algoSelect');
+        const youtubeLinkInput = document.getElementById('youtubeLink');
+        const textbookResourcesContainer = document.getElementById('textbookResourcesContainer');
+        const addTextbookBtn = document.getElementById('addTextbookBtn');
+        const saveResourcesBtn = document.getElementById('saveResourcesBtn');
+        const saveMessage = document.getElementById('saveMessage');
+
+        // Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId; // To store the current user's UID for Firestore paths
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Global app ID
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        let firebaseReadyPromise; // To manage Firebase initialization state
+
+
+        // --- Firebase Initialization ---
+        async function initializeFirebase() {
+            if (firebaseReadyPromise) return firebaseReadyPromise; // Prevent multiple initializations
+
+            firebaseReadyPromise = new Promise(async (resolve, reject) => {
+                try {
+                    if (Object.keys(firebaseConfig).length > 0) {
+                        app = initializeApp(firebaseConfig);
+                        db = getFirestore(app);
+                        auth = getAuth(app);
+
+                        // This listener will fire immediately with current user, or after sign-in
+                        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                            unsubscribe(); // Unsubscribe after first state change
+                            userId = user ? user.uid : null;
+                            console.log("Admin: Firebase initialized. User ID:", userId);
+
+                            // If userId is null, attempt anonymous sign-in
+                            if (!user) {
+                                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                                try {
+                                    if (initialAuthToken) {
+                                        await signInWithCustomToken(auth, initialAuthToken);
+                                        console.log("Admin: Signed in with custom token.");
+                                    } else {
+                                        await signInAnonymously(auth);
+                                        console.log("Admin: Signed in anonymously.");
+                                    }
+                                    // The onAuthStateChanged listener will fire again after successful sign-in
+                                    // with the new user object, so userId will be updated then.
+                                } catch (signInError) {
+                                    console.error("Admin: Error during initial sign-in:", signInError);
+                                    // Even if sign-in fails, we resolve, but userId will remain null
+                                }
+                            }
+                            resolve(); // Resolve the promise indicating Firebase is ready and auth state known
+                        });
+
+                    } else {
+                        console.warn("Admin: Firebase config is not available. Persistence will be disabled.");
+                        resolve(); // Resolve immediately if Firebase config isn't provided
+                    }
+                } catch (error) {
+                    console.error("Admin: Error initializing Firebase:", error);
+                    reject(error);
+                }
+            });
+            return firebaseReadyPromise;
+        }
+
+        // --- Message Display Utility ---
+        function showMessage(element, message, type = 'info') {
+            element.textContent = message;
+            element.className = `message-box show ${type}`;
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        // --- Admin Login Logic (Simulated) ---
+        loginBtn.addEventListener('click', async () => { // Make async
+            const username = adminUsernameInput.value;
+            const password = adminPasswordInput.value;
+
+            if (username === 'admin' && password === 'admin') {
+                loginSection.classList.add('hidden');
+                adminPanelSection.classList.remove('hidden');
+                showMessage(loginMessage, 'Login successful!', 'success');
+                
+                // Ensure Firebase is initialized and authenticated before loading data
+                await initializeFirebase(); // This will ensure userId is set
+                loadAlgorithmData(); // Now load data
+            } else {
+                showMessage(loginMessage, 'Invalid username or password.', 'error');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            adminPanelSection.classList.add('hidden');
+            loginSection.classList.remove('hidden');
+            adminUsernameInput.value = '';
+            adminPasswordInput.value = '';
+            showMessage(loginMessage, 'Logged out.', 'info');
+        });
+
+        // --- Resource Management Logic ---
+
+        // Function to fetch and populate data for the selected algorithm
+        async function loadAlgorithmData() {
+            const selectedAlgoId = algoSelect.value;
+            // Check userId explicitly (after Firebase is confirmed ready by initializeFirebase)
+            if (!db || userId === null) { 
+                showMessage(saveMessage, 'Firebase not ready or user not authenticated. Cannot load resources.', 'error');
+                console.warn("Admin: Firestore or user not ready for loading data. db:", db, "userId:", userId);
+                return;
+            }
+            try {
+                const docRef = doc(db, `artifacts/${appId}/public/data/algorithm_resources`, selectedAlgoId);
+                const docSnap = await getDoc(docRef);
+
+                let youtubeLink = '';
+                let textbookResources = [];
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    youtubeLink = data.youtubeLink || '';
+                    textbookResources = data.textbookResources || [];
+                }
+
+                youtubeLinkInput.value = youtubeLink;
+                renderTextbookResources(textbookResources);
+                showMessage(saveMessage, `Resources loaded for ${selectedAlgoId}.`, 'success');
+
+            } catch (error) {
+                console.error("Admin: Error loading algorithm data:", error);
+                showMessage(saveMessage, 'Error loading resources. Check console.', 'error');
+                // Clear fields on error
+                youtubeLinkInput.value = '';
+                renderTextbookResources([]);
+            }
+        }
+
+        // Function to render textbook resources inputs
+        function renderTextbookResources(resources) {
+            textbookResourcesContainer.innerHTML = '';
+            resources.forEach((res, index) => {
+                const div = document.createElement('div');
+                div.className = 'resource-item';
+                div.innerHTML = `
+                    <input type="text" class="flex-1" placeholder="Resource Title" value="${res.title || ''}" data-index="${index}" data-type="title">
+                    <input type="url" class="flex-1" placeholder="Resource URL" value="${res.url || ''}" data-index="${index}" data-type="url">
+                    <button type="button" class="btn-danger remove-textbook-btn" data-index="${index}">Remove</button>
+                `;
+                textbookResourcesContainer.appendChild(div);
+            });
+            // Add event listeners for new remove buttons
+            document.querySelectorAll('.remove-textbook-btn').forEach(button => {
+                button.onclick = removeTextbookResource;
+            });
+        }
+
+        // Function to add a new empty textbook resource input
+        addTextbookBtn.addEventListener('click', () => {
+            const newIndex = textbookResourcesContainer.children.length;
+            const div = document.createElement('div');
+            div.className = 'resource-item';
+            div.innerHTML = `
+                <input type="text" class="flex-1" placeholder="Resource Title" data-index="${newIndex}" data-type="title">
+                <input type="url" class="flex-1" placeholder="Resource URL" data-index="${newIndex}" data-type="url">
+                <button type="button" class="btn-danger remove-textbook-btn" data-index="${newIndex}">Remove</button>
+            `;
+            textbookResourcesContainer.appendChild(div);
+            // Add event listener for the newly created remove button
+            div.querySelector('.remove-textbook-btn').onclick = removeTextbookResource;
+        });
+
+        // Function to remove a textbook resource input
+        function removeTextbookResource(event) {
+            event.target.closest('.resource-item').remove();
+            // Re-index remaining elements to maintain order if necessary, or simplify logic for saving
+            // For saving, we'll just collect all current inputs.
+        }
+
+        // Function to save all resources for the current algorithm
+        saveResourcesBtn.addEventListener('click', async () => {
+            const selectedAlgoId = algoSelect.value;
+            // Check userId explicitly (after Firebase is confirmed ready by initializeFirebase)
+            if (!db || userId === null) { 
+                showMessage(saveMessage, 'Firebase not ready or user not authenticated. Cannot save resources.', 'error');
+                console.warn("Admin: Firestore or user not ready for saving data. db:", db, "userId:", userId);
+                return;
+            }
+
+            const youtubeLink = youtubeLinkInput.value.trim();
+            const textbookResources = [];
+            document.querySelectorAll('#textbookResourcesContainer .resource-item').forEach(item => {
+                const titleInput = item.querySelector('input[data-type="title"]');
+                const urlInput = item.querySelector('input[data-type="url"]');
+                const title = titleInput ? titleInput.value.trim() : '';
+                const url = urlInput ? urlInput.value.trim() : '';
+                if (title || url) { // Only save if at least title or URL is provided
+                    textbookResources.push({ title, url });
+                }
+            });
+
+            const resourceData = {
+                youtubeLink: youtubeLink,
+                textbookResources: textbookResources
+            };
+
+            try {
+                // Save to public collection
+                const docRef = doc(db, `artifacts/${appId}/public/data/algorithm_resources`, selectedAlgoId);
+                await setDoc(docRef, resourceData);
+                showMessage(saveMessage, 'Resources saved successfully!', 'success');
+            } catch (error) {
+                console.error("Admin: Error saving resources:", error);
+                showMessage(saveMessage, `Error saving resources: ${error.message}`, 'error');
+            }
+        });
+
+        // Event listener for algorithm selection change
+        algoSelect.addEventListener('change', loadAlgorithmData);
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // No need to initialize Firebase here, it will be done on login button click
+            // to ensure it happens after login, and the promise ensures it's awaited.
+            loginSection.classList.remove('hidden');
+            adminPanelSection.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
