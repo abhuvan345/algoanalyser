@@ -32,6 +32,12 @@
             background-repeat: no-repeat;
             background-position: center center;
             color: var(--color-space-silver);
+            min-height: 100vh; /* Ensure body takes full height for admin panel centering */
+            display: flex;
+            flex-direction: column;
+            /* For centering the admin-main-container when active */
+            align-items: center;
+            justify-content: center;
         }
         .brand-text-main { color: var(--color-space-light-blue); }
         .brand-text-accent { color: var(--color-space-yellow); }
@@ -62,12 +68,14 @@
             height: 100%;
         }
         /* Custom styles for inputs to match theme */
-        textarea, select, input[type="number"] {
+        textarea, select, input[type="number"], input[type="text"], input[type="password"], input[type="url"] {
             background-color: rgba(255, 255, 255, 0.08);
             color: var(--color-space-silver);
             border-color: rgba(138, 138, 255, 0.3);
+            padding: 0.75rem; /* Added padding for consistency */
+            border-radius: 0.5rem; /* Added border-radius for consistency */
         }
-        textarea::placeholder, input[type="number"]::placeholder {
+        textarea::placeholder, input::placeholder {
             color: rgba(192, 192, 192, 0.6);
         }
         select option {
@@ -201,6 +209,123 @@
             height: 350px;
             border-radius: 8px;
         }
+
+        /* Admin Panel Specific Styles */
+        .admin-main-container {
+            flex-grow: 1; /* Allow main content to grow and push footer down */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center horizontally within the container */
+            align-items: center; /* Center vertically within the container */
+            width: 100%;
+            padding-bottom: 20px; /* Padding above footer */
+        }
+        .admin-card {
+            width: 100%;
+            max-width: 900px; /* Max width for admin forms */
+            margin: 20px auto; /* Centered with some margin */
+        }
+        .admin-card.login {
+            max-width: 400px; /* Smaller card for login */
+            background: linear-gradient(145deg, rgba(26, 10, 61, 0.9), rgba(8, 0, 31, 0.9)); /* Gradient background for login */
+            border: 1px solid var(--color-space-light-blue); /* Stronger border */
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5), 0 6px 12px -6px rgba(0, 0, 0, 0.4); /* More pronounced shadow */
+            padding: 2.5rem; /* Increased padding */
+        }
+        .admin-card.login h2 {
+            font-size: 2.5rem; /* Larger title */
+            text-shadow: 0 0 10px rgba(138, 138, 255, 0.6); /* Subtle glow */
+            margin-bottom: 2rem; /* More space below title */
+        }
+        .admin-card.login input {
+            border-width: 2px; /* Thicker border for inputs */
+            border-color: rgba(138, 138, 255, 0.5);
+        }
+        .admin-card.login input:focus {
+            border-color: var(--color-space-yellow); /* Yellow focus border */
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2); /* Soft yellow glow on focus */
+        }
+
+        /* Button styles for Admin Panel */
+        .btn-primary {
+            background-color: var(--color-space-light-blue);
+            color: var(--color-space-deep-blue);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn-primary:hover {
+            background-color: var(--color-space-light-blue);
+            filter: brightness(1.1);
+            transform: translateY(-2px) scale(1.02); /* Slight lift and scale */
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+        .btn-danger {
+            background-color: var(--color-space-pink);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn-danger:hover {
+            background-color: var(--color-space-pink);
+            filter: brightness(0.9);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-space-silver);
+            border: 1px solid rgba(138, 138, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+        /* Focus styles for buttons for accessibility */
+        button:focus {
+            outline: 2px solid var(--color-space-yellow);
+            outline-offset: 2px;
+        }
+        .message-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .message-box.show {
+            opacity: 1;
+        }
+        .message-box.error {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #FFB3B3;
+        }
+        .message-box.success {
+            background-color: rgba(0, 255, 0, 0.1);
+            color: #B3FFB3;
+        }
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -209,215 +334,273 @@
         <p class="text-lg md:text-xl font-light mt-2 max-w-3xl mx-auto">Visualize sorting and graph algorithms with interactive animations.</p>
     </header>
 
-    <main class="container mx-auto p-4 md:p-8">
+    <div class="admin-main-container">
+        <!-- Main Visualizer Content -->
+        <main id="visualizerSection" class="container mx-auto p-4 md:p-8">
 
-        <div class="flex justify-center mb-8 gap-4">
-            <button id="showArrayAlgoBtn" class="tab-button active">Array Algorithms</button>
-            <button id="showGraphAlgoBtn" class="tab-button">Graph Algorithms</button>
-        </div>
+            <div class="flex justify-center mb-8 gap-4">
+                <button id="showArrayAlgoBtn" class="tab-button active">Array Algorithms</button>
+                <button id="showGraphAlgoBtn" class="tab-button">Graph Algorithms</button>
+            </div>
 
-        <!-- Array Algorithms Section -->
-        <div id="arrayAlgoSection">
-            <section id="controls-array" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Input Array</h2>
-                    <textarea id="arrayInput" rows="3" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter comma-separated distinct integers (e.g., 12, 3, 5, 7, 19)">12, 3, 5, 7, 19, 26, 1, 8</textarea>
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <button id="loadArrayBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Load Array
-                        </button>
-                        <button id="generateRandomArrayBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Generate Random (10 elements)
-                        </button>
-                        <input type="range" id="animationSpeed" min="1" max="100" value="1" class="flex-grow">
-                        <span class="text-gray-300 text-sm">Speed: <span id="speedValue">1</span>x</span>
-                    </div>
-                    <p id="inputError" class="text-red-400 text-sm mt-2 hidden"></p>
-                </div>
-
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm & Controls</h2>
-                    <div class="mb-4">
-                        <label for="algorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
-                        <select id="algorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
-                            <option value="bubbleSort">Bubble Sort</option>
-                            <option value="selectionSort">Selection Sort</option>
-                            <option value="quickSort">Quick Sort</option>
-                            <option value="mergeSort">Merge Sort</option>
-                            <option value="radixSort">Radix Sort (LSD)</option>
-                            <option value="topologicalSort">Topological Sort (Not a bar sort)</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-wrap gap-3 mt-4">
-                        <button id="startBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Start Animation
-                        </button>
-                        <button id="pauseBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Pause
-                        </button>
-                        <button id="resetBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Reset
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <section id="visualization-array" class="my-8">
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Visualization</h2>
-                    <div class="canvas-container">
-                        <canvas id="algorithmCanvas"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <section id="algorithm-info-array" class="my-8">
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm Information: <span id="algoName" class="brand-text-accent">Bubble Sort</span></h2>
-                    <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
-                    <p id="algoDescription" class="text-gray-400 mb-4">
-                        Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
-                            <ul class="list-disc list-inside" id="timeComplexityList">
-                                <li>Best Case: O(n)</li>
-                                <li>Average Case: O(n²)</li>
-                                <li>Worst Case: O(n²)</li>
-                            </ul>
+            <!-- Array Algorithms Section -->
+            <div id="arrayAlgoSection">
+                <section id="controls-array" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Input Array</h2>
+                        <textarea id="arrayInput" rows="3" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter comma-separated distinct integers (e.g., 12, 3, 5, 7, 19)">12, 3, 5, 7, 19, 26, 1, 8</textarea>
+                        <div class="mt-4 flex flex-wrap gap-3">
+                            <button id="loadArrayBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Load Array
+                            </button>
+                            <button id="generateRandomArrayBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Generate Random (10 elements)
+                            </button>
+                            <input type="range" id="animationSpeed" min="1" max="100" value="1" class="flex-grow">
+                            <span class="text-gray-300 text-sm">Speed: <span id="speedValue">1</span>x</span>
                         </div>
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
-                            <ul class="list-disc list-inside" id="spaceComplexityList">
-                                <li>O(1) auxiliary space</li>
-                            </ul>
+                        <p id="inputError" class="text-red-400 text-sm mt-2 hidden"></p>
+                    </div>
+
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm & Controls</h2>
+                        <div class="mb-4">
+                            <label for="algorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                            <select id="algorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
+                                <option value="bubbleSort">Bubble Sort</option>
+                                <option value="selectionSort">Selection Sort</option>
+                                <option value="quickSort">Quick Sort</option>
+                                <option value="mergeSort">Merge Sort</option>
+                                <option value="radixSort">Radix Sort (LSD)</option>
+                                <option value="topologicalSort">Topological Sort (Not a bar sort)</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-wrap gap-3 mt-4">
+                            <button id="startBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Start Animation
+                            </button>
+                            <button id="pauseBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Pause
+                            </button>
+                            <button id="resetBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Reset
+                            </button>
                         </div>
                     </div>
-                    <div class="mt-6 flex flex-wrap gap-3">
-                        <button id="viewYoutubeArrayBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            <i class="fab fa-youtube mr-2"></i>Watch Video
-                        </button>
-                        <button id="viewTextbookArrayBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            <i class="fas fa-book mr-2"></i>Textbook Resources
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </div>
+                </section>
 
-        <!-- Graph Algorithms Section (Initially Hidden) -->
-        <div id="graphAlgoSection" class="hidden">
-            <section id="controls-graph" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Input Graph (Adjacency Matrix)</h2>
-                    <textarea id="adjacencyMatrixInput" rows="5" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter adjacency matrix rows, space-separated values (e.g., for 3 nodes, use '0' for no edge, positive integers for weights):&#10;0 5 10&#10;5 0 0&#10;10 0 0">0 1 1 0
+                <section id="visualization-array" class="my-8">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Visualization</h2>
+                        <div class="canvas-container">
+                            <canvas id="algorithmCanvas"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="algorithm-info-array" class="my-8">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Algorithm Information: <span id="algoName" class="brand-text-accent">Bubble Sort</span></h2>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
+                        <p id="algoDescription" class="text-gray-400 mb-4">
+                            Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
+                                <ul class="list-disc list-inside" id="timeComplexityList">
+                                    <li>Best Case: O(n)</li>
+                                    <li>Average Case: O(n²)</li>
+                                    <li>Worst Case: O(n²)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
+                                <ul class="list-disc list-inside" id="spaceComplexityList">
+                                    <li>O(1) auxiliary space</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <button id="viewYoutubeArrayBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                <i class="fab fa-youtube mr-2"></i>Watch Video
+                            </button>
+                            <button id="viewTextbookArrayBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                <i class="fas fa-book mr-2"></i>Textbook Resources
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Graph Algorithms Section (Initially Hidden) -->
+            <div id="graphAlgoSection" class="hidden">
+                <section id="controls-graph" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Input Graph (Adjacency Matrix)</h2>
+                        <textarea id="adjacencyMatrixInput" rows="5" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter adjacency matrix rows, space-separated values (e.g., for 3 nodes, use '0' for no edge, positive integers for weights):&#10;0 5 10&#10;5 0 0&#10;10 0 0">0 1 1 0
 1 0 0 1
 1 0 0 1
 0 1 1 0</textarea>
-                    <div class="mt-4">
-                        <label for="startNodeInput" class="block text-gray-300 font-medium mb-2">Starting Node (0-indexed):</label>
-                        <input type="number" id="startNodeInput" value="0" min="0" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
-                    </div>
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <button id="loadGraphBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Load Graph
-                        </button>
-                        <button id="generateRandomGraphBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Generate Random (5 nodes)
-                        </button>
-                    </div>
-                    <p id="graphInputError" class="text-red-400 text-sm mt-2 hidden"></p>
-                </div>
-
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Algorithm & Controls</h2>
-                    <div class="mb-4">
-                        <label for="graphAlgorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
-                        <select id="graphAlgorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
-                            <option value="bfs">Breadth-First Search (BFS)</option>
-                            <option value="dfs">Depth-First Search (DFS)</option>
-                            <option value="dijkstra">Dijkstra's Algorithm</option>
-                            <option value="prim">Prim's Algorithm</option>
-                            <option value="floydWarshall">Floyd-Warshall Algorithm</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-wrap gap-3 mt-4">
-                        <button id="startGraphBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Start Animation
-                        </button>
-                        <button id="pauseGraphBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Pause
-                        </button>
-                        <button id="resetGraphBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            Reset
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <section id="visualization-graph" class="my-8">
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Visualization</h2>
-                    <div class="canvas-container">
-                        <canvas id="graphCanvas"></canvas>
-                    </div>
-                    <!-- Color Legend for Graph -->
-                    <div id="graph-legend" class="mt-4 text-gray-300 text-sm grid grid-cols-2 md:grid-cols-3 gap-2">
-                        <div class="flex items-center"><span class="color-box" data-color-key="NODE_COLOR"></span><span>Node (Unvisited)</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="VISITED_NODE_COLOR"></span><span>Visited Node</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="CURRENT_NODE_COLOR"></span><span>Current Node</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="QUEUE_STACK_COLOR"></span><span>In Queue/Stack</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="EDGE_COLOR"></span><span>Unvisited Edge</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="TRAVERSED_EDGE_COLOR"></span><span>Traversed Edge</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="SHORTEST_PATH_EDGE_COLOR"></span><span>Shortest Path Edge</span></div>
-                        <div class="flex items-center"><span class="color-box" data-color-key="MST_EDGE_COLOR"></span><span>MST Edge</span></div>
-                    </div>
-                    <!-- Queue/Stack/Distance Display -->
-                    <div id="queueStackDisplay" class="mt-4 text-gray-300 text-lg font-mono"></div>
-                </div>
-            </section>
-
-            <section id="algorithm-info-graph" class="my-8">
-                <div class="card">
-                    <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Algorithm Information: <span id="algoGraphName" class="brand-text-accent">Breadth-First Search (BFS)</span></h2>
-                    <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
-                    <p id="algoGraphDescription" class="text-gray-400 mb-4">
-                        BFS is an algorithm for traversing or searching tree or graph data structures. It starts at the tree root (or some arbitrary node of a graph, sometimes referred to as a "search key"), and explores all of the neighbor nodes at the present depth prior to moving on to the nodes at the next depth level.
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
-                            <ul class="list-disc list-inside" id="graphTimeComplexityList">
-                                <li>O(V + E) (for adjacency list)</li>
-                                <li>O(V²) (for adjacency matrix)</li>
-                            </ul>
+                        <div class="mt-4">
+                            <label for="startNodeInput" class="block text-gray-300 font-medium mb-2">Starting Node (0-indexed):</label>
+                            <input type="number" id="startNodeInput" value="0" min="0" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
                         </div>
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
-                            <ul class="list-disc list-inside" id="graphSpaceComplexityList">
-                                <li>O(V) (for queue and visited array)</li>
-                            </ul>
+                        <div class="mt-4 flex flex-wrap gap-3">
+                            <button id="loadGraphBtn" class="bg-[var(--color-space-light-blue)] hover:bg-[var(--color-space-light-blue)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Load Graph
+                            </button>
+                            <button id="generateRandomGraphBtn" class="bg-[var(--color-space-dark-purple)] hover:bg-[var(--color-space-dark-purple)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Generate Random (5 nodes)
+                            </button>
+                        </div>
+                        <p id="graphInputError" class="text-red-400 text-sm mt-2 hidden"></p>
+                    </div>
+
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Algorithm & Controls</h2>
+                        <div class="mb-4">
+                            <label for="graphAlgorithmSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                            <select id="graphAlgorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
+                                <option value="bfs">Breadth-First Search (BFS)</option>
+                                <option value="dfs">Depth-First Search (DFS)</option>
+                                <option value="dijkstra">Dijkstra's Algorithm</option>
+                                <option value="prim">Prim's Algorithm</option>
+                                <option value="floydWarshall">Floyd-Warshall Algorithm</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-wrap gap-3 mt-4">
+                            <button id="startGraphBtn" class="bg-[var(--color-space-cyan)] hover:bg-[var(--color-space-cyan)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Start Animation
+                            </button>
+                            <button id="pauseGraphBtn" class="bg-[var(--color-space-yellow)] hover:bg-[var(--color-space-yellow)]/80 text-gray-900 font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Pause
+                            </button>
+                            <button id="resetGraphBtn" class="bg-[var(--color-space-pink)] hover:bg-[var(--color-space-pink)]/80 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                Reset
+                            </button>
                         </div>
                     </div>
-                    <div class="mt-6 flex flex-wrap gap-3">
-                        <button id="viewYoutubeGraphBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            <i class="fab fa-youtube mr-2"></i>Watch Video
-                        </button>
-                        <button id="viewTextbookGraphBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                            <i class="fas fa-book mr-2"></i>Textbook Resources
-                        </button>
+                </section>
+
+                <section id="visualization-graph" class="my-8">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Visualization</h2>
+                        <div class="canvas-container">
+                            <canvas id="graphCanvas"></canvas>
+                        </div>
+                        <!-- Color Legend for Graph -->
+                        <div id="graph-legend" class="mt-4 text-gray-300 text-sm grid grid-cols-2 md:grid-cols-3 gap-2">
+                            <div class="flex items-center"><span class="color-box" data-color-key="NODE_COLOR"></span><span>Node (Unvisited)</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="VISITED_NODE_COLOR"></span><span>Visited Node</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="CURRENT_NODE_COLOR"></span><span>Current Node</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="QUEUE_STACK_COLOR"></span><span>In Queue/Stack</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="EDGE_COLOR"></span><span>Unvisited Edge</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="TRAVERSED_EDGE_COLOR"></span><span>Traversed Edge</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="SHORTEST_PATH_EDGE_COLOR"></span><span>Shortest Path Edge</span></div>
+                            <div class="flex items-center"><span class="color-box" data-color-key="MST_EDGE_COLOR"></span><span>MST Edge</span></div>
+                        </div>
+                        <!-- Queue/Stack/Distance Display -->
+                        <div id="queueStackDisplay" class="mt-4 text-gray-300 text-lg font-mono"></div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                <section id="algorithm-info-graph" class="my-8">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold brand-text-main mb-4">Graph Algorithm Information: <span id="algoGraphName" class="brand-text-accent">Breadth-First Search (BFS)</span></h2>
+                        <h3 class="text-xl font-semibold text-gray-300 mb-2">Description:</h3>
+                        <p id="algoGraphDescription" class="text-gray-400 mb-4">
+                            BFS is an algorithm for traversing or searching tree or graph data structures. It starts at the tree root (or some arbitrary node of a graph, sometimes referred to as a "search key"), and explores all of the neighbor nodes at the present depth prior to moving on to the nodes at the next depth level.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-400">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-300 mb-2">Time Complexity:</h3>
+                                <ul class="list-disc list-inside" id="graphTimeComplexityList">
+                                    <li>O(V + E) (for adjacency list)</li>
+                                    <li>O(V²) (for adjacency matrix)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-300 mb-2">Space Complexity:</h3>
+                                <ul class="list-disc list-inside" id="graphSpaceComplexityList">
+                                    <li>O(V) (for queue and visited array)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <button id="viewYoutubeGraphBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                <i class="fab fa-youtube mr-2"></i>Watch Video
+                            </button>
+                            <button id="viewTextbookGraphBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                                <i class="fas fa-book mr-2"></i>Textbook Resources
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+
+        <!-- Admin Login Section -->
+        <div id="loginSection" class="w-full hidden admin-card login">
+            <div class="card p-8">
+                <h2 class="text-3xl font-bold brand-text-main mb-6 text-center">Admin Login</h2>
+                <input type="text" id="adminUsername" placeholder="Username">
+                <input type="password" id="adminPassword" placeholder="Password">
+                <button id="loginBtn" class="btn-primary w-full mt-4">Login</button>
+                <div id="loginMessage" class="message-box hidden"></div>
+                <button id="backToVisualizerFromLoginBtn" class="btn-secondary w-full mt-4">Back to Visualizer</button>
+            </div>
         </div>
 
-    </main>
+        <!-- Admin Panel Section -->
+        <div id="adminPanelSection" class="w-full hidden admin-card">
+            <div class="card p-8">
+                <h2 class="text-3xl font-bold brand-text-main mb-6 text-center">Manage Algorithm Resources</h2>
+                
+                <div class="mb-4">
+                    <label for="algoSelect" class="block text-gray-300 font-medium mb-2">Select Algorithm:</label>
+                    <select id="algoSelect" class="w-full p-2 border rounded-md">
+                        <!-- Array Algorithms -->
+                        <option value="bubbleSort">Bubble Sort</option>
+                        <option value="selectionSort">Selection Sort</option>
+                        <option value="quickSort">Quick Sort</option>
+                        <option value="mergeSort">Merge Sort</option>
+                        <option value="radixSort">Radix Sort (LSD)</option>
+                        <!-- Graph Algorithms -->
+                        <option value="bfs">Breadth-First Search (BFS)</option>
+                        <option value="dfs">Depth-First Search (DFS)</option>
+                        <option value="dijkstra">Dijkstra's Algorithm</option>
+                        <option value="prim">Prim's Algorithm</option>
+                        <option value="floydWarshall">Floyd-Warshall Algorithm</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-300 mb-3">YouTube Video Link</h3>
+                    <input type="url" id="youtubeLink" placeholder="Enter YouTube video URL">
+                </div>
+
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold text-gray-300 mb-3">Textbook Resources</h3>
+                    <div id="textbookResourcesContainer">
+                        <!-- Dynamic textbook inputs will go here -->
+                    </div>
+                    <button id="addTextbookBtn" class="btn-secondary mt-3">Add Textbook Resource</button>
+                </div>
+
+                <button id="saveResourcesBtn" class="btn-primary w-full">Save Resources</button>
+                <div id="saveMessage" class="message-box hidden"></div>
+                <button id="logoutBtn" class="btn-secondary w-full mt-4">Logout</button>
+                <button id="backToVisualizerFromAdminBtn" class="btn-secondary w-full mt-2">Back to Visualizer</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="text-center p-8 mt-8 border-t border-gray-700">
         <p class="text-gray-500">Built for educational purposes. Designed by BHUVAN A</p>
         <p class="mt-2">
-            <a href="admin_panel.html" target="_blank" class="text-blue-400 hover:underline">Manage Resources (Admin Panel)</a>
+            <button id="toggleAdminPanelBtn" class="text-blue-400 hover:underline bg-transparent border-none p-0 cursor-pointer">Manage Resources (Admin Panel)</button>
         </p>
     </footer>
 
@@ -431,12 +614,10 @@
     </div>
 
     <script type="module">
-        // Firebase imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        console.log("Algorithm Visualizer & Admin Panel script loaded.");
 
         // --- Global Variables and Constants ---
+        const visualizerSection = document.getElementById('visualizerSection');
         const arrayAlgoSection = document.getElementById('arrayAlgoSection');
         const graphAlgoSection = document.getElementById('graphAlgoSection');
         const showArrayAlgoBtn = document.getElementById('showArrayAlgoBtn');
@@ -458,7 +639,6 @@
         let algoNameSpan, algoDescriptionP, timeComplexityList, spaceComplexityList;
         const viewYoutubeArrayBtn = document.getElementById('viewYoutubeArrayBtn');
         const viewTextbookArrayBtn = document.getElementById('viewTextbookArrayBtn');
-
 
         // Graph Algo Elements
         const graphCanvas = document.getElementById('graphCanvas');
@@ -482,6 +662,25 @@
         const modalTitle = document.getElementById('modalTitle');
         const modalContent = document.getElementById('modalContent');
 
+        // Admin Panel Elements
+        const loginSection = document.getElementById('loginSection');
+        const adminPanelSection = document.getElementById('adminPanelSection');
+        const adminUsernameInput = document.getElementById('adminUsername');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginMessage = document.getElementById('loginMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const algoSelect = document.getElementById('algoSelect'); // Admin panel algo select
+        const youtubeLinkInput = document.getElementById('youtubeLink');
+        const textbookResourcesContainer = document.getElementById('textbookResourcesContainer');
+        const addTextbookBtn = document.getElementById('addTextbookBtn');
+        const saveResourcesBtn = document.getElementById('saveResourcesBtn');
+        const saveMessage = document.getElementById('saveMessage');
+        const toggleAdminPanelBtn = document.getElementById('toggleAdminPanelBtn');
+        const backToVisualizerFromLoginBtn = document.getElementById('backToVisualizerFromLoginBtn');
+        const backToVisualizerFromAdminBtn = document.getElementById('backToVisualizerFromAdminBtn');
+
+
         let originalArray = [];
         let currentArray = [];
         let arrayAnimationSteps = [];
@@ -501,14 +700,8 @@
 
         let animationSpeed = 1; // Default speed to 1x
 
-        // Firebase variables
-        let app;
-        let db;
-        let auth;
-        let userId; // To store the current user's UID for Firestore paths
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Global app ID
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        let firebaseReadyPromise; // To manage Firebase initialization state
+        // Global object to store resources for all algorithms, managed by Local Storage
+        let algorithmResources = {};
 
         // Algorithm visualization colors (kept vibrant for clarity)
         const BAR_COLOR = '#00FFFF'; // Cyan
@@ -542,89 +735,41 @@
             'MST_EDGE_COLOR': MST_EDGE_COLOR
         };
 
-        // --- Firebase Initialization and Auth ---
-        async function initializeFirebase() {
-            if (firebaseReadyPromise) return firebaseReadyPromise; // Prevent multiple initializations
-
-            firebaseReadyPromise = new Promise(async (resolve, reject) => {
-                try {
-                    if (Object.keys(firebaseConfig).length > 0) {
-                        app = initializeApp(firebaseConfig);
-                        db = getFirestore(app);
-                        auth = getAuth(app);
-
-                        // This listener will fire immediately with current user, or after sign-in
-                        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                            unsubscribe(); // Unsubscribe after first state change
-                            userId = user ? user.uid : null;
-                            console.log("Firebase initialized. User ID:", userId);
-
-                            // If userId is null, attempt anonymous sign-in
-                            if (!user) {
-                                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                                try {
-                                    if (initialAuthToken) {
-                                        await signInWithCustomToken(auth, initialAuthToken);
-                                        console.log("Signed in with custom token.");
-                                    } else {
-                                        await signInAnonymously(auth);
-                                        console.log("Signed in anonymously.");
-                                    }
-                                    // The onAuthStateChanged listener will fire again after successful sign-in
-                                    // with the new user object, so userId will be updated then.
-                                } catch (signInError) {
-                                    console.error("Error during initial sign-in:", signInError);
-                                    // Even if sign-in fails, we resolve, but userId will remain null
-                                }
-                            }
-                            resolve(); // Resolve the promise indicating Firebase is ready and auth state known
-                        });
-
-                    } else {
-                        console.warn("Firebase config is not available. Resource management will be disabled.");
-                        resolve(); // Resolve immediately if Firebase config isn't provided
-                    }
-                } catch (error) {
-                    console.error("Error initializing Firebase:", error);
-                    reject(error);
-                }
-            });
-            return firebaseReadyPromise;
+        // --- Local Storage Management ---
+        function loadResourcesFromLocalStorage() {
+            const storedResources = localStorage.getItem('algorithm_resources');
+            if (storedResources) {
+                algorithmResources = JSON.parse(storedResources);
+            } else {
+                // Initialize with empty data for all known algorithms if nothing is stored
+                const allAlgos = [
+                    'bubbleSort', 'selectionSort', 'quickSort', 'mergeSort', 'radixSort', 'topologicalSort',
+                    'bfs', 'dfs', 'dijkstra', 'prim', 'floydWarshall'
+                ];
+                allAlgos.forEach(algoId => {
+                    algorithmResources[algoId] = { youtubeLink: '', textbookResources: [] };
+                });
+                saveResourcesToLocalStorage(); // Save the initial empty structure
+            }
+            console.log("Resources loaded from local storage:", algorithmResources);
         }
 
-        // --- Resource Loading and Modal Display ---
-        async function loadAlgorithmResources(algoId) {
-            // Ensure Firebase is initialized and user is authenticated before attempting to load
-            if (!db || userId === null) {
-                console.warn("Firestore not initialized or user not authenticated. Cannot load resources.");
-                currentAlgorithmResources[algoId] = { youtubeLink: '', textbookResources: [] }; // Default empty
-                return;
-            }
-            try {
-                // Public data: /artifacts/{appId}/public/data/algorithm_resources/{algoId}
-                const docRef = doc(db, `artifacts/${appId}/public/data/algorithm_resources`, algoId);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    // Store fetched data globally or for current algorithm
-                    currentAlgorithmResources[algoId] = data;
-                } else {
-                    currentAlgorithmResources[algoId] = { youtubeLink: '', textbookResources: [] };
-                }
-                console.log(`Resources loaded for ${algoId}:`, currentAlgorithmResources[algoId]);
-            } catch (error) {
-                console.error("Error loading algorithm resources:", error);
-                currentAlgorithmResources[algoId] = { youtubeLink: '', textbookResources: [] }; // Default empty on error
-            }
+        function saveResourcesToLocalStorage() {
+            localStorage.setItem('algorithm_resources', JSON.stringify(algorithmResources));
+            console.log("Resources saved to local storage.");
         }
 
-        // Object to store resources for all algorithms
-        const currentAlgorithmResources = {};
+        // --- Resource Loading and Modal Display (for Visualizer) ---
+        function loadAlgorithmResourcesForDisplay(algoId) {
+            const resources = algorithmResources[algoId] || { youtubeLink: '', textbookResources: [] };
+            // This function just retrieves from the in-memory object, which is loaded from local storage.
+            return resources;
+        }
 
         function openResourceModal(algoId, type) {
-            const resources = currentAlgorithmResources[algoId];
-            if (!resources) {
+            const resources = loadAlgorithmResourcesForDisplay(algoId); // Get resources for current algo
+
+            if (!resources || (!resources.youtubeLink && (!resources.textbookResources || resources.textbookResources.length === 0))) {
                 modalTitle.textContent = "No Resources Available";
                 modalContent.innerHTML = "<p class='text-gray-400'>No resources found for this algorithm. An admin can add them via the Manage Resources link in the footer.</p>";
                 resourceModal.classList.remove('hidden');
@@ -679,7 +824,27 @@
             }
         });
 
-        // --- UI Switching Logic ---
+        // --- Main UI Section Toggling ---
+        function showSection(sectionId) {
+            // Hide all main sections
+            visualizerSection.classList.add('hidden');
+            loginSection.classList.add('hidden');
+            adminPanelSection.classList.add('hidden');
+
+            // Show the requested section
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Adjust body alignment based on active section
+            if (sectionId === 'loginSection' || sectionId === 'adminPanelSection') {
+                document.body.style.justifyContent = 'center';
+                document.body.style.alignItems = 'center';
+            } else {
+                document.body.style.justifyContent = 'flex-start';
+                document.body.style.alignItems = 'stretch';
+            }
+        }
+
+        // --- Visualizer UI Switching Logic ---
         function showArrayAlgorithms() {
             arrayAlgoSection.classList.remove('hidden');
             graphAlgoSection.classList.add('hidden');
@@ -688,7 +853,7 @@
             stopAllAnimations(); // Stop any ongoing animations
             resetArrayAnimation();
             initializeCanvas(); // Re-init array canvas
-            loadAlgorithmResources(algorithmSelect.value); // Load resources for current array algo
+            updateArrayAlgorithmInfo(algorithmSelect.value); // Re-load info/resources
         }
 
         function showGraphAlgorithms() {
@@ -699,7 +864,7 @@
             stopAllAnimations(); // Stop any ongoing animations
             resetGraphAnimation();
             initializeGraphCanvas(); // Re-init graph canvas
-            loadAlgorithmResources(graphAlgorithmSelect.value); // Load resources for current graph algo
+            updateGraphAlgorithmInfo(graphAlgorithmSelect.value); // Re-load info/resources
         }
 
         function stopAllAnimations() {
@@ -805,7 +970,7 @@
             }
         }
 
-        function bubbleSort(arr) { /* ... (same as before) ... */
+        function bubbleSort(arr) {
             const steps = [];
             let n = arr.length;
             let a = [...arr];
@@ -835,7 +1000,7 @@
             return steps;
         }
 
-        function selectionSort(arr) { /* ... (same as before) ... */
+        function selectionSort(arr) {
             const steps = [];
             let n = arr.length;
             let a = [...arr];
@@ -863,7 +1028,7 @@
             return steps;
         }
 
-        function quickSort(arr) { /* ... (same as before) ... */
+        function quickSort(arr) {
             const steps = [];
             let a = [...arr];
             
@@ -907,7 +1072,7 @@
             return steps;
         }
 
-        function mergeSort(arr) { /* ... (same as before) ... */
+        function mergeSort(arr) {
             const steps = [];
             let a = [...arr];
 
@@ -969,7 +1134,7 @@
             return steps;
         }
         
-        function radixSort(arr) { /* ... (same as before) ... */
+        function radixSort(arr) {
             const steps = [];
             let a = [...arr];
             const maxVal = Math.max(...a);
@@ -1116,7 +1281,7 @@
             }
 
             loadArray();
-            loadAlgorithmResources(selectedAlgo); // Load resources for newly selected algorithm
+            // No longer need loadAlgorithmResources here as it's for display data, not admin editing
         }
 
         // --- Graph Algorithm Functions ---
@@ -1355,7 +1520,7 @@
 
                 // Draw distance/key if applicable (for Dijkstra's/Prim's)
                 const currentAlgo = graphAlgorithmSelect.value;
-                if (currentAlgo === 'dijkstra' || currentCualgo === 'prim' || currentAlgo === 'floydWarshall') {
+                if (currentAlgo === 'dijkstra' || currentAlgo === 'prim' || currentAlgo === 'floydWarshall') {
                     let displayValue = '';
                     if (currentAlgo === 'dijkstra' || currentAlgo === 'floydWarshall') {
                         displayValue = nodes[i].distance === INF ? 'INF' : nodes[i].distance;
@@ -1864,7 +2029,7 @@
                 spaceComplexity.forEach(item => { const li = document.createElement('li'); li.textContent = item; graphSpaceComplexityList.appendChild(li); });
             }
             resetGraphAnimation();
-            loadAlgorithmResources(selectedAlgo); // Load resources for newly selected algorithm
+            // No longer need loadAlgorithmResources here as it's for display data, not admin editing
         }
 
         // --- Color Legend Initialization ---
@@ -1879,6 +2044,92 @@
                 }
             });
         }
+
+        // --- Admin Panel Logic ---
+
+        // Message Display Utility (reused for admin panel)
+        function showMessage(element, message, type = 'info') {
+            element.textContent = message;
+            element.className = `message-box show ${type}`;
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        // Function to fetch and populate data for the selected algorithm (for admin panel)
+        function loadAlgorithmDataForAdmin() {
+            const selectedAlgoId = algoSelect.value;
+            const resources = algorithmResources[selectedAlgoId] || { youtubeLink: '', textbookResources: [] };
+
+            youtubeLinkInput.value = resources.youtubeLink || '';
+            renderTextbookResources(resources.textbookResources || []);
+            showMessage(saveMessage, `Resources loaded for ${selectedAlgoId}.`, 'success');
+        }
+
+        // Function to render textbook resources inputs
+        function renderTextbookResources(resources) {
+            textbookResourcesContainer.innerHTML = '';
+            resources.forEach((res, index) => {
+                const div = document.createElement('div');
+                div.className = 'resource-item';
+                div.innerHTML = `
+                    <input type="text" class="flex-1" placeholder="Resource Title" value="${res.title || ''}" data-index="${index}" data-type="title">
+                    <input type="url" class="flex-1" placeholder="Resource URL" value="${res.url || ''}" data-index="${index}" data-type="url">
+                    <button type="button" class="btn-danger remove-textbook-btn" data-index="${index}">Remove</button>
+                `;
+                textbookResourcesContainer.appendChild(div);
+            });
+            // Add event listeners for new remove buttons
+            document.querySelectorAll('.remove-textbook-btn').forEach(button => {
+                button.onclick = removeTextbookResource;
+            });
+        }
+
+        // Function to add a new empty textbook resource input
+        addTextbookBtn.addEventListener('click', () => {
+            const newIndex = textbookResourcesContainer.children.length;
+            const div = document.createElement('div');
+            div.className = 'resource-item';
+            div.innerHTML = `
+                <input type="text" class="flex-1" placeholder="Resource Title" data-index="${newIndex}" data-type="title">
+                <input type="url" class="flex-1" placeholder="Resource URL" data-index="${newIndex}" data-type="url">
+                <button type="button" class="btn-danger remove-textbook-btn" data-index="${newIndex}">Remove</button>
+            `;
+            textbookResourcesContainer.appendChild(div);
+            // Add event listener for the newly created remove button
+            div.querySelector('.remove-textbook-btn').onclick = removeTextbookResource;
+        });
+
+        // Function to remove a textbook resource input
+        function removeTextbookResource(event) {
+            event.target.closest('.resource-item').remove();
+            // For saving, we'll just collect all current inputs.
+        }
+
+        // Function to save all resources for the current algorithm
+        saveResourcesBtn.addEventListener('click', () => {
+            const selectedAlgoId = algoSelect.value;
+            const youtubeLink = youtubeLinkInput.value.trim();
+            const textbookResources = [];
+            document.querySelectorAll('#textbookResourcesContainer .resource-item').forEach(item => {
+                const titleInput = item.querySelector('input[data-type="title"]');
+                const urlInput = item.querySelector('input[data-type="url"]');
+                const title = titleInput ? titleInput.value.trim() : '';
+                const url = urlInput ? url.value.trim() : '';
+                if (title || url) { // Only save if at least title or URL is provided
+                    textbookResources.push({ title, url });
+                }
+            });
+
+            // Update the in-memory object for the current algorithm
+            algorithmResources[selectedAlgoId] = {
+                youtubeLink: youtubeLink,
+                textbookResources: textbookResources
+            };
+            
+            saveResourcesToLocalStorage(); // Persist to local storage
+            showMessage(saveMessage, 'Resources saved successfully!', 'success');
+        });
 
         // --- Event Listeners and Initial Setup ---
         
@@ -1920,13 +2171,42 @@
         viewYoutubeGraphBtn.addEventListener('click', () => openResourceModal(graphAlgorithmSelect.value, 'youtube'));
         viewTextbookGraphBtn.addEventListener('click', () => openResourceModal(graphAlgorithmSelect.value, 'textbook'));
 
-
         animationSpeedSlider.addEventListener('input', (event) => {
             animationSpeed = parseInt(event.target.value);
             speedValueSpan.textContent = animationSpeed;
         });
 
-        document.addEventListener('DOMContentLoaded', async () => { // Make async
+        // Admin Panel Event Listeners
+        toggleAdminPanelBtn.addEventListener('click', () => showSection('loginSection'));
+
+        loginBtn.addEventListener('click', () => {
+            const username = adminUsernameInput.value;
+            const password = adminPasswordInput.value;
+
+            if (username === 'admin' && password === 'admin') {
+                showSection('adminPanelSection');
+                showMessage(loginMessage, 'Login successful!', 'success');
+                loadAlgorithmDataForAdmin(); // Load data for admin panel after login
+            } else {
+                showMessage(loginMessage, 'Invalid username or password.', 'error');
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            showSection('visualizerSection'); // Go back to visualizer
+            adminUsernameInput.value = '';
+            adminPasswordInput.value = '';
+            showMessage(loginMessage, 'Logged out.', 'info');
+        });
+
+        backToVisualizerFromLoginBtn.addEventListener('click', () => showSection('visualizerSection'));
+        backToVisualizerFromAdminBtn.addEventListener('click', () => showSection('visualizerSection'));
+
+        // Admin panel algo select listener
+        algoSelect.addEventListener('change', loadAlgorithmDataForAdmin);
+
+
+        document.addEventListener('DOMContentLoaded', () => {
             // Assign global variables once DOM is ready for array section
             algoNameSpan = document.getElementById('algoName');
             algoDescriptionP = document.getElementById('algoDescription');
@@ -1939,15 +2219,18 @@
             graphTimeComplexityList = document.getElementById('graphTimeComplexityList');
             graphSpaceComplexityList = document.getElementById('graphSpaceComplexityList');
 
-            // Initialize Firebase first and wait for it
-            await initializeFirebase(); 
-
             // Initialize the color legend
             initializeColorLegend();
 
             animationSpeedSlider.value = animationSpeed;
             speedValueSpan.textContent = animationSpeed;
             
+            // Load resources from local storage once the DOM is ready
+            loadResourcesFromLocalStorage();
+
+            // Default to showing the visualizer section
+            showSection('visualizerSection');
+
             // Initialize the correct canvas based on the default tab
             if (!graphAlgoSection.classList.contains('hidden')) {
                 initializeGraphCanvas();
