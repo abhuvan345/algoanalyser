@@ -110,7 +110,7 @@
         .tab-button.active {
             background-color: var(--color-space-light-blue);
             color: var(--color-space-deep-blue);
-            box-shadow: 0 4px 6px (0,0,0,0.2);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
         .color-box {
             display: inline-block;
@@ -223,7 +223,7 @@
             <section id="controls-graph" class="my-8 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="card">
                     <h2 class="text-2xl font-bold brand-text-main mb-4">Input Graph (Adjacency Matrix)</h2>
-                    <textarea id="adjacencyMatrixInput" rows="5" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter adjacency matrix rows, space-separated values (e.g., for 3 nodes:&#10;0 1 1&#10;1 0 0&#10;1 0 0)">0 1 1 0
+                    <textarea id="adjacencyMatrixInput" rows="5" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500" placeholder="Enter adjacency matrix rows, space-separated values (e.g., for 3 nodes, use '0' for no edge, positive integers for weights):&#10;0 5 10&#10;5 0 0&#10;10 0 0">0 1 1 0
 1 0 0 1
 1 0 0 1
 0 1 1 0</textarea>
@@ -249,6 +249,9 @@
                         <select id="graphAlgorithmSelect" class="w-full p-2 border rounded-md focus:ring-2 focus:border-blue-500">
                             <option value="bfs">Breadth-First Search (BFS)</option>
                             <option value="dfs">Depth-First Search (DFS)</option>
+                            <option value="dijkstra">Dijkstra's Algorithm</option>
+                            <option value="prim">Prim's Algorithm</option>
+                            <option value="floydWarshall">Floyd-Warshall Algorithm</option>
                         </select>
                     </div>
                     <div class="flex flex-wrap gap-3 mt-4">
@@ -279,8 +282,10 @@
                         <div class="flex items-center"><span class="color-box" data-color-key="QUEUE_STACK_COLOR"></span><span>In Queue/Stack</span></div>
                         <div class="flex items-center"><span class="color-box" data-color-key="EDGE_COLOR"></span><span>Unvisited Edge</span></div>
                         <div class="flex items-center"><span class="color-box" data-color-key="TRAVERSED_EDGE_COLOR"></span><span>Traversed Edge</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="SHORTEST_PATH_EDGE_COLOR"></span><span>Shortest Path Edge</span></div>
+                        <div class="flex items-center"><span class="color-box" data-color-key="MST_EDGE_COLOR"></span><span>MST Edge</span></div>
                     </div>
-                    <!-- Queue/Stack Display -->
+                    <!-- Queue/Stack/Distance Display -->
                     <div id="queueStackDisplay" class="mt-4 text-gray-300 text-lg font-mono"></div>
                 </div>
             </section>
@@ -360,14 +365,15 @@
         let arrayAnimationFrameId = null;
         let isArrayAnimating = false;
 
-        let adjacencyMatrix = [];
-        let graphNodes = [];
+        let adjacencyMatrix = []; // Stores the parsed adjacency matrix (with weights)
+        let graphNodes = [];      // Stores node positions and state for drawing
         let graphAnimationSteps = [];
         let graphAnimationIndex = 0;
         let graphAnimationFrameId = null;
         let isGraphAnimating = false;
         let nodeCount = 0;
         let startNode = 0;
+        const INF = Infinity; // Represents no direct connection for shortest path/MST
 
         let animationSpeed = 1; // Default speed to 1x
 
@@ -386,8 +392,10 @@
         const VISITED_NODE_COLOR = '#8A8AFF'; // Light Blue
         const CURRENT_NODE_COLOR = '#FFD700'; // Yellow
         const EDGE_COLOR = '#C0C0C0'; // Silver
-        const TRAVERSED_EDGE_COLOR = '#FF69B4'; // Pink (for visited edges)
+        const TRAVERSED_EDGE_COLOR = '#FF69B4'; // Pink (for BFS/DFS traversal)
         const QUEUE_STACK_COLOR = '#005F73'; // Dark Teal
+        const SHORTEST_PATH_EDGE_COLOR = '#00FF00'; // Green for Dijkstra's final path edges
+        const MST_EDGE_COLOR = '#FFFF00'; // Yellow for Prim's MST edges
 
         // Map for color legend dynamic updates
         const graphColorMap = {
@@ -396,7 +404,9 @@
             'CURRENT_NODE_COLOR': CURRENT_NODE_COLOR,
             'QUEUE_STACK_COLOR': QUEUE_STACK_COLOR,
             'EDGE_COLOR': EDGE_COLOR,
-            'TRAVERSED_EDGE_COLOR': TRAVERSED_EDGE_COLOR
+            'TRAVERSED_EDGE_COLOR': TRAVERSED_EDGE_COLOR,
+            'SHORTEST_PATH_EDGE_COLOR': SHORTEST_PATH_EDGE_COLOR,
+            'MST_EDGE_COLOR': MST_EDGE_COLOR
         };
 
         // --- UI Switching Logic ---
@@ -862,19 +872,20 @@
 
             let isValidMatrix = true;
             for (let i = 0; i < N; i++) {
-                if (rows[i].length !== N || rows[i].some(isNaN) || rows[i].some(val => val !== 0 && val !== 1)) {
+                // Check if row length matches N and all values are non-negative numbers
+                if (rows[i].length !== N || rows[i].some(isNaN) || rows[i].some(val => val < 0)) {
                     isValidMatrix = false;
                     break;
                 }
             }
 
             if (!isValidMatrix) {
-                graphInputError.textContent = 'Invalid matrix: Must be a square matrix of 0s and 1s.';
+                graphInputError.textContent = 'Invalid matrix: Must be a square matrix of non-negative numbers.';
                 graphInputError.classList.remove('hidden');
                 return;
             }
             
-            // Check for undirected graph (symmetric matrix)
+            // Check for undirected graph (symmetric matrix) by comparing weights
             let isSymmetric = true;
             for (let i = 0; i < N; i++) {
                 for (let j = 0; j < N; j++) {
@@ -894,7 +905,7 @@
 
 
             nodeCount = N;
-            adjacencyMatrix = rows;
+            adjacencyMatrix = rows; // Store the original weighted matrix
             graphInputError.classList.add('hidden');
 
             const selectedStartNode = parseInt(startNodeInput.value);
@@ -919,7 +930,10 @@
                     visited: false,
                     isCurrent: false,
                     isQueueStack: false,
-                    statusText: '' // New property for status text
+                    statusText: '', // Status text (V, Q, S, C)
+                    distance: INF,   // For Dijkstra/Floyd-Warshall
+                    key: INF,        // For Prim's
+                    parent: null     // For MSTs and shortest paths reconstruction
                 });
             }
 
@@ -930,9 +944,9 @@
             const matrix = Array(count).fill(0).map(() => Array(count).fill(0));
             for (let i = 0; i < count; i++) {
                 for (let j = i + 1; j < count; j++) { // Ensure symmetric for undirected
-                    if (Math.random() > 0.6) { // ~40% chance of an edge
-                        matrix[i][j] = 1;
-                        matrix[j][i] = 1;
+                    if (Math.random() > 0.5) { // ~50% chance of an edge
+                        matrix[i][j] = Math.floor(Math.random() * 20) + 1; // Random weight 1-20
+                        matrix[j][i] = matrix[i][j]; // Symmetric
                     }
                 }
             }
@@ -963,13 +977,12 @@
         }
 
         function drawGraph(nodes, matrix, highlight = {}) {
-            console.log("drawGraph called with highlight:", highlight); // Debug log
             graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
 
             // Draw edges first
             for (let i = 0; i < nodeCount; i++) {
                 for (let j = i + 1; j < nodeCount; j++) { // Loop for undirected graph, draw each edge once
-                    if (matrix[i][j] === 1) {
+                    if (matrix[i][j] > 0) { // Check for actual connection (weight > 0)
                         graphCtx.beginPath();
                         graphCtx.moveTo(nodes[i].x, nodes[i].y);
                         graphCtx.lineTo(nodes[j].x, nodes[j].y);
@@ -977,27 +990,43 @@
                         graphCtx.lineWidth = 1;
 
                         let isHighlightedEdge = false;
-                        
-                        if (highlight.traversedEdge) {
-                            if (highlight.traversedEdge[0] === i && highlight.traversedEdge[1] === j) {
-                                isHighlightedEdge = true;
-                            } else if (highlight.traversedEdge[0] === j && highlight.traversedEdge[1] === i) {
-                                isHighlightedEdge = true;
-                            }
+                        let edgeColorOverride = null;
+
+                        if (highlight.traversedEdge && 
+                           ((highlight.traversedEdge[0] === i && highlight.traversedEdge[1] === j) ||
+                            (highlight.traversedEdge[0] === j && highlight.traversedEdge[1] === i))) {
+                            isHighlightedEdge = true;
+                            edgeColorOverride = TRAVERSED_EDGE_COLOR;
+                        } else if (highlight.shortestPathEdges && highlight.shortestPathEdges.some(e => (e[0] === i && e[1] === j) || (e[0] === j && e[1] === i))) {
+                            edgeColorOverride = SHORTEST_PATH_EDGE_COLOR;
+                            graphCtx.lineWidth = 3;
+                        } else if (highlight.mstEdges && highlight.mstEdges.some(e => (e[0] === i && e[1] === j) || (e[0] === j && e[1] === i))) {
+                            edgeColorOverride = MST_EDGE_COLOR;
+                            graphCtx.lineWidth = 3;
                         }
 
-                        if (isHighlightedEdge) {
-                            graphCtx.strokeStyle = TRAVERSED_EDGE_COLOR;
+                        if (edgeColorOverride) {
+                            graphCtx.strokeStyle = edgeColorOverride;
                             graphCtx.lineWidth = 3;
                         }
                         graphCtx.stroke();
 
-                        // Draw arrowhead if edge is traversed
-                        if (isHighlightedEdge) {
+                        // Draw arrowhead only for traversal algorithms (BFS/DFS) and if it's the specific traversed edge
+                        const currentAlgo = graphAlgorithmSelect.value;
+                        if (isHighlightedEdge && (currentAlgo === 'bfs' || currentAlgo === 'dfs')) {
                             const startNodeCoord = nodes[highlight.traversedEdge[0]];
                             const endNodeCoord = nodes[highlight.traversedEdge[1]];
                             drawArrowhead(graphCtx, startNodeCoord.x, startNodeCoord.y, endNodeCoord.x, endNodeCoord.y, 20, TRAVERSED_EDGE_COLOR); // 20 is nodeRadius
                         }
+
+                        // Draw edge weight
+                        const midX = (nodes[i].x + nodes[j].x) / 2;
+                        const midY = (nodes[i].y + nodes[j].y) / 2;
+                        graphCtx.fillStyle = '#FFFFFF'; // White for edge weights
+                        graphCtx.font = '12px Inter';
+                        graphCtx.textAlign = 'center';
+                        graphCtx.textBaseline = 'middle';
+                        graphCtx.fillText(matrix[i][j], midX, midY - 10); // Offset text slightly above edge
                     }
                 }
             }
@@ -1013,7 +1042,7 @@
                     graphCtx.fillStyle = CURRENT_NODE_COLOR;
                 } else if (nodes[i].visited) {
                     graphCtx.fillStyle = VISITED_NODE_COLOR;
-                } else if (nodes[i].isQueueStack) {
+                } else if (nodes[i].isQueueStack) { // Used for queue/stack members in BFS/DFS
                     graphCtx.fillStyle = QUEUE_STACK_COLOR;
                 }
 
@@ -1037,6 +1066,24 @@
                     graphCtx.textBaseline = 'middle';
                     // Position slightly above and to the right of the node, with increased offset
                     graphCtx.fillText(nodes[i].statusText, nodes[i].x + nodeRadius * 0.7 + 8, nodes[i].y - nodeRadius * 0.7 - 8);
+                }
+
+                // Draw distance/key if applicable (for Dijkstra's/Prim's)
+                const currentAlgo = graphAlgorithmSelect.value;
+                if (currentAlgo === 'dijkstra' || currentAlgo === 'prim' || currentAlgo === 'floydWarshall') {
+                    let displayValue = '';
+                    if (currentAlgo === 'dijkstra' || currentAlgo === 'floydWarshall') {
+                        displayValue = nodes[i].distance === INF ? 'INF' : nodes[i].distance;
+                    } else if (currentAlgo === 'prim') {
+                        displayValue = nodes[i].key === INF ? 'INF' : nodes[i].key;
+                    }
+                    if (displayValue !== '') {
+                        graphCtx.fillStyle = '#FFD700'; // Yellow for distance/key
+                        graphCtx.font = 'bold 12px Inter';
+                        graphCtx.textAlign = 'center';
+                        graphCtx.textBaseline = 'top'; // Position below the node
+                        graphCtx.fillText(displayValue, nodes[i].x, nodes[i].y + nodeRadius + 5);
+                    }
                 }
             }
         }
@@ -1067,7 +1114,7 @@
                 steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u }, queue: [...queue] });
 
                 for (let v = 0; v < N; v++) {
-                    if (matrix[u][v] === 1) {
+                    if (matrix[u][v] > 0) { // Check for connection (weight > 0)
                         if (!visited[v]) {
                             visited[v] = true;
                             queue.push(v);
@@ -1106,7 +1153,7 @@
                 steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u }, stack: [...stack] });
                 
                 for (let v = 0; v < N; v++) {
-                    if (matrix[u][v] === 1) {
+                    if (matrix[u][v] > 0) { // Check for connection (weight > 0)
                         steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u, v] }, stack: [...stack] });
                         if (!visited[v]) {
                             stack.push(v);
@@ -1147,6 +1194,214 @@
             return steps;
         }
 
+        // Dijkstra's Algorithm
+        function dijkstra(matrix, startNodeIdx) {
+            const steps = [];
+            const N = matrix.length;
+            let currentNodesState = JSON.parse(JSON.stringify(graphNodes));
+
+            // Initialize distances and visited status
+            for (let i = 0; i < N; i++) {
+                currentNodesState[i].distance = INF;
+                currentNodesState[i].visited = false;
+                currentNodesState[i].isCurrent = false;
+                currentNodesState[i].statusText = '';
+            }
+            currentNodesState[startNodeIdx].distance = 0;
+
+            // Push initial state
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {} });
+
+            // Min-priority queue (simulated with array and sort for simplicity)
+            const minHeap = [];
+            for (let i = 0; i < N; i++) {
+                minHeap.push({ node: i, dist: currentNodesState[i].distance });
+            }
+
+            while (minHeap.length > 0) {
+                minHeap.sort((a, b) => a.dist - b.dist); // Sort to get min distance node
+                const { node: u, dist: uDist } = minHeap.shift(); // Extract min
+
+                if (currentNodesState[u].visited) continue; // Already processed
+
+                currentNodesState[u].visited = true;
+                currentNodesState[u].isCurrent = true; // Mark as current processing node
+                currentNodesState[u].statusText = 'V'; // Mark as Visited
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u } });
+
+                // Relax neighbors
+                for (let v = 0; v < N; v++) {
+                    if (matrix[u][v] > 0 && !currentNodesState[v].visited) {
+                        const weight = matrix[u][v];
+                        if (currentNodesState[u].distance !== INF && currentNodesState[u].distance + weight < currentNodesState[v].distance) {
+                            currentNodesState[v].distance = currentNodesState[u].distance + weight;
+                            currentNodesState[v].parent = u; // Store parent for path reconstruction
+                            // Update distance in minHeap if exists
+                            const heapIdx = minHeap.findIndex(item => item.node === v);
+                            if (heapIdx !== -1) {
+                                minHeap[heapIdx].dist = currentNodesState[v].distance;
+                            } else {
+                                // This case typically shouldn't happen if all nodes are initially in heap
+                                // but if a node is only reachable later, it might be added here.
+                                minHeap.push({ node: v, dist: currentNodesState[v].distance });
+                            }
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u, v], relaxedNode: v } });
+                        } else {
+                             // Just highlight edge as being considered
+                             steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u, v] } });
+                        }
+                    }
+                }
+                currentNodesState[u].isCurrent = false; // Done processing
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {} });
+            }
+
+            // Final state: Highlight shortest path edges (optional, but good for visual confirmation)
+            let shortestPathEdges = [];
+            for(let i=0; i<N; i++) {
+                if (currentNodesState[i].parent !== null) {
+                    shortestPathEdges.push([currentNodesState[i].parent, i]);
+                }
+            }
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { shortestPathEdges: shortestPathEdges } });
+
+            return steps;
+        }
+
+        // Prim's Algorithm
+        function prim(matrix, startNodeIdx) {
+            const steps = [];
+            const N = matrix.length;
+            let currentNodesState = JSON.parse(JSON.stringify(graphNodes));
+
+            // Initialize keys and parents
+            for (let i = 0; i < N; i++) {
+                currentNodesState[i].key = INF;
+                currentNodesState[i].parent = null;
+                currentNodesState[i].visited = false;
+                currentNodesState[i].isCurrent = false;
+                currentNodesState[i].statusText = '';
+            }
+            currentNodesState[startNodeIdx].key = 0; // Start node's key is 0
+
+            // Push initial state
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: {} });
+
+            const minHeap = [];
+            for (let i = 0; i < N; i++) {
+                minHeap.push({ node: i, key: currentNodesState[i].key });
+            }
+
+            let mstEdges = [];
+
+            while (minHeap.length > 0) {
+                minHeap.sort((a, b) => a.key - b.key); // Sort to get min key node
+                const { node: u, key: uKey } = minHeap.shift();
+
+                if (currentNodesState[u].visited) continue;
+
+                currentNodesState[u].visited = true;
+                currentNodesState[u].isCurrent = true;
+                currentNodesState[u].statusText = 'V';
+                
+                if (currentNodesState[u].parent !== null) { // Add edge to MST if not starting node
+                    mstEdges.push([currentNodesState[u].parent, u]);
+                }
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, mstEdges: [...mstEdges] } });
+
+
+                for (let v = 0; v < N; v++) {
+                    if (matrix[u][v] > 0 && !currentNodesState[v].visited) {
+                        const weight = matrix[u][v];
+                        if (weight < currentNodesState[v].key) {
+                            currentNodesState[v].key = weight;
+                            currentNodesState[v].parent = u;
+                            // Update key in minHeap
+                            const heapIdx = minHeap.findIndex(item => item.node === v);
+                            if (heapIdx !== -1) {
+                                minHeap[heapIdx].key = currentNodesState[v].key;
+                            } else {
+                                minHeap.push({ node: v, key: currentNodesState[v].key });
+                            }
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u,v], updatingNode: v, mstEdges: [...mstEdges] } });
+                        } else {
+                            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { current: u, traversedEdge: [u,v], mstEdges: [...mstEdges] } });
+                        }
+                    }
+                }
+                currentNodesState[u].isCurrent = false;
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { mstEdges: [...mstEdges] } });
+            }
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { mstEdges: [...mstEdges] } }); // Final state
+            return steps;
+        }
+
+        // Floyd-Warshall Algorithm
+        function floydWarshall(matrix) {
+            const steps = [];
+            const N = matrix.length;
+            let currentNodesState = JSON.parse(JSON.stringify(graphNodes));
+
+            // Initialize dist matrix
+            let dist = Array(N).fill(0).map(() => Array(N).fill(0));
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < N; j++) {
+                    if (i === j) dist[i][j] = 0;
+                    else if (matrix[i][j] > 0) dist[i][j] = matrix[i][j];
+                    else dist[i][j] = INF;
+                }
+            }
+
+            // Initial state: distances are direct connections or INF
+            for(let i=0; i<N; i++) {
+                currentNodesState[i].distance = dist[startNode][i]; // Show distances from startNode
+                currentNodesState[i].statusText = '';
+            }
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { matrix: JSON.parse(JSON.stringify(dist)) } });
+
+            for (let k = 0; k < N; k++) {
+                for (let i = 0; i < N; i++) {
+                    for (let j = 0; j < N; j++) {
+                        // Highlight current k, i, j
+                        currentNodesState[k].isCurrent = true;
+                        currentNodesState[i].statusText = 'i';
+                        currentNodesState[j].statusText = 'j';
+
+                        // Show matrix and highlight k node
+                        steps.push({ 
+                            nodes: JSON.parse(JSON.stringify(currentNodesState)), 
+                            highlight: { current: k, checkI: i, checkJ: j, matrix: JSON.parse(JSON.stringify(dist)) } 
+                        });
+
+                        if (dist[i][k] !== INF && dist[k][j] !== INF && dist[i][k] + dist[k][j] < dist[i][j]) {
+                            dist[i][j] = dist[i][k] + dist[k][j];
+                            // Update distance on nodes for startNode -> j if relevant
+                            if (i === startNode) {
+                                currentNodesState[j].distance = dist[startNode][j];
+                            }
+                            steps.push({ 
+                                nodes: JSON.parse(JSON.stringify(currentNodesState)), 
+                                highlight: { current: k, checkI: i, checkJ: j, updatedPath: [i, k, j], matrix: JSON.parse(JSON.stringify(dist)) } 
+                            });
+                        }
+                        currentNodesState[i].statusText = ''; // Clear i and j status
+                        currentNodesState[j].statusText = '';
+                    }
+                }
+                currentNodesState[k].isCurrent = false; // Clear k status after its iteration
+                steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { matrix: JSON.parse(JSON.stringify(dist)) } });
+            }
+
+            // Final state
+            for(let i=0; i<N; i++) {
+                currentNodesState[i].distance = dist[startNode][i]; // Ensure final distances from startNode are displayed
+                currentNodesState[i].statusText = 'V'; // All nodes considered
+            }
+            steps.push({ nodes: JSON.parse(JSON.stringify(currentNodesState)), highlight: { matrix: JSON.parse(JSON.stringify(dist)) } });
+            return steps;
+        }
+
+
         function animateGraph() {
             if (!isGraphAnimating || graphAnimationIndex >= graphAnimationSteps.length) {
                 isGraphAnimating = false;
@@ -1167,8 +1422,21 @@
                     queueStackDiv.textContent = `Queue: [${step.queue.join(', ')}]`;
                 } else if (currentAlgo === 'dfs' && step.stack) {
                     queueStackDiv.textContent = `Stack: [${step.stack.join(', ')}]`;
-                } else {
-                    queueStackDiv.textContent = '';
+                } else if (currentAlgo === 'dijkstra') {
+                    // Dijkstra: Show distances of reachable nodes (or full distances array if needed)
+                    let distances = graphNodes.map(node => `${node.label}: ${node.distance === INF ? 'INF' : node.distance}`).join(', ');
+                    queueStackDiv.textContent = `Distances from Node ${startNode}: {${distances}}`;
+                } else if (currentAlgo === 'prim') {
+                    // Prim's: Show current keys (min edge weights)
+                    let keys = graphNodes.map(node => `${node.label}: ${node.key === INF ? 'INF' : node.key}`).join(', ');
+                    queueStackDiv.textContent = `Min Edge Keys: {${keys}}`;
+                } else if (currentAlgo === 'floydWarshall' && step.highlight && step.highlight.matrix) {
+                    // Floyd-Warshall: Show progress of matrix (from start node to others)
+                    let distRow = step.highlight.matrix[startNode].map((val, idx) => `${idx}:${val === INF ? 'INF' : val}`).join(', ');
+                    queueStackDiv.textContent = `Shortest Paths from Node ${startNode}: {${distRow}} (k=${step.highlight.current || 'N/A'})`;
+                }
+                 else {
+                    queueStackDiv.textContent = ''; // Clear if no specific display
                 }
             }
 
@@ -1209,13 +1477,23 @@
             startGraphBtn.textContent = 'Start Animation';
             pauseGraphBtn.textContent = 'Pause';
             
+            // Reset node states and re-draw static graph
             if (graphNodes.length > 0) {
                 graphNodes.forEach(node => {
                     node.visited = false;
                     node.isCurrent = false;
                     node.isQueueStack = false;
                     node.statusText = '';
+                    node.distance = INF; // Reset distances for weighted algorithms
+                    node.key = INF;      // Reset keys for Prim's
+                    node.parent = null;  // Reset parents
                 });
+                // Initialize specific values for the start node based on selected algorithm for initial draw
+                const selectedGraphAlgo = graphAlgorithmSelect.value;
+                if (selectedGraphAlgo === 'dijkstra' || selectedGraphAlgo === 'prim' || selectedGraphAlgo === 'floydWarshall') {
+                    graphNodes[startNode].distance = 0; // For Dijkstra/Floyd-Warshall
+                    graphNodes[startNode].key = 0;      // For Prim's
+                }
                 drawGraph(graphNodes, adjacencyMatrix, {});
             }
 
@@ -1228,6 +1506,12 @@
                     graphAnimationSteps = bfs(adjacencyMatrix, startNode);
                 } else if (selectedGraphAlgo === 'dfs') {
                     graphAnimationSteps = dfs(adjacencyMatrix, startNode);
+                } else if (selectedGraphAlgo === 'dijkstra') {
+                    graphAnimationSteps = dijkstra(adjacencyMatrix, startNode);
+                } else if (selectedGraphAlgo === 'prim') {
+                    graphAnimationSteps = prim(adjacencyMatrix, startNode);
+                } else if (selectedGraphAlgo === 'floydWarshall') {
+                    graphAnimationSteps = floydWarshall(adjacencyMatrix);
                 }
             } else {
                 graphAnimationSteps = [];
@@ -1249,9 +1533,25 @@
                 description = 'DFS is an algorithm for traversing or searching tree or graph data structures. It starts at the root (or selecting some arbitrary node as the root in the case of a graph) and explores as far as possible along each branch before backtracking. It uses a stack to remember to get to the next vertex to start a search when a dead end occurs in any iteration.';
                 timeComplexity = ['O(V + E) (for adjacency list)', 'O(V²) (for adjacency matrix)'];
                 spaceComplexity = ['O(V) (for recursion stack / explicit stack and visited array)'];
+            } else if (selectedAlgo === 'dijkstra') {
+                algoGraphNameSpan.textContent = "Dijkstra's Algorithm";
+                description = "Dijkstra's algorithm is a shortest path algorithm for graphs with non-negative edge weights. It finds the shortest paths from a single source node to all other reachable nodes, working iteratively to select the unvisited node with the smallest known distance.";
+                timeComplexity = ['O(V²) (for adjacency matrix)', 'O(E log V) or O(E + V log V) (for adjacency list with binary heap)'];
+                spaceComplexity = ['O(V)'];
+            } else if (selectedAlgo === 'prim') {
+                algoGraphNameSpan.textContent = "Prim's Algorithm";
+                description = "Prim's algorithm is a greedy algorithm that finds a Minimum Spanning Tree (MST) for a weighted undirected graph. It starts from an arbitrary vertex and continuously adds the cheapest edge that connects a vertex in the tree to a vertex outside the tree.";
+                timeComplexity = ['O(V²) (for adjacency matrix)', 'O(E log V) or O(E + V log V) (for adjacency list with binary heap)'];
+                spaceComplexity = ['O(V)'];
+            } else if (selectedAlgo === 'floydWarshall') {
+                algoGraphNameSpan.textContent = "Floyd-Warshall Algorithm";
+                description = "The Floyd-Warshall algorithm is an all-pairs shortest path algorithm. It finds the shortest paths between all pairs of vertices in a weighted graph (can have negative weights, but no negative cycles). It works by iteratively improving path estimates through intermediate vertices.";
+                timeComplexity = ['O(V³)'];
+                spaceComplexity = ['O(V²)'];
             }
 
-            if (algoGraphNameSpan) algoGraphNameSpan.textContent = selectedAlgo.toUpperCase();
+
+            if (algoGraphNameSpan) algoGraphNameSpan.textContent = selectedAlgo.replace(/([A-Z])/g, ' $1').trim().replace('Sort', ' Sort').replace('dijkstra', 'Dijkstra\'s Algorithm').replace('prim', 'Prim\'s Algorithm').replace('floydWarshall', 'Floyd-Warshall Algorithm');
             if (algoGraphDescriptionP) algoGraphDescriptionP.textContent = description;
 
             if (graphTimeComplexityList) {
@@ -1267,13 +1567,11 @@
 
         // --- Color Legend Initialization ---
         function initializeColorLegend() {
-            console.log("Initializing color legend..."); // Debug log
             const colorBoxes = document.querySelectorAll('#graph-legend .color-box');
             colorBoxes.forEach(box => {
                 const colorKey = box.dataset.colorKey;
                 if (graphColorMap[colorKey]) {
                     box.style.backgroundColor = graphColorMap[colorKey];
-                    console.log(`Setting color for ${colorKey}: ${graphColorMap[colorKey]}`); // Debug log
                 } else {
                     console.warn(`Color key '${colorKey}' not found in graphColorMap.`);
                 }
